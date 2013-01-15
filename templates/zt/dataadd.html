@@ -1,0 +1,98 @@
+{% extends "zt/base/basepage.html" %}
+{% block js %}
+<style type="text/css">
+.STYLE1 {
+	height:25px;
+	background-color:#ffffff;
+}
+</style>
+ <script type="text/javascript">
+ function checkCode(){
+
+ }
+ </script>
+{% endblock %}
+{% block body %}
+<body onLoad=""  style="background:#ececec">
+{% endblock %}
+{% block navigator %}
+<a  href="#">报表录入</a> >> <a href="javascript:history.back(-1);">后退</a>
+{% endblock %}
+{% block content %}
+ <form id="codeUpload"  method="post" action="/zt/codeupload/" onSubmit="checkCode()">{% csrf_token %}
+<table align="center" width="95%" border="0" cellpadding=1 cellspacing=1 bgcolor="#D5E3E6" >
+    <tr style="background-color:#ffffff;">
+        <td align="right" width="60px">代码：</td>
+        <td><textarea  style="width:100%;height:100px;" name="codelist"></textarea></td>
+    </tr>
+    <tr style="background-color:#ffffff;">
+        <td colspan="2"><input type="submit" value="提交" style="margin-left:60px;"></td>
+    </tr>
+</table>
+</form>
+<form id="register"  method="post" action="/zt/orderbbsave" onSubmit="checkTrue()">{% csrf_token %}<input type="hidden" name="num" value="{{ num }}">
+<table align="center" width="95%" border="0" cellpadding=1 cellspacing=1 bgcolor="#D5E3E6" >
+ {% if message %}
+            <tr class="STYLE1">
+                <td colspan="11" align="center" style="color:red;">{{ message }}</td>
+            </tr>
+        {% endif %}
+    <tr class="STYLE1" >
+    <td colspan="12" align="right" >录入日期:<input type="text" name="date" style="width:200px;" value="{{ nowdate|date:"Y-m-d H:i" }}"></td>
+</tr>
+    <tr class="STYLE1">
+        <td rowspan="2">源订单编号</td>
+    <td rowspan="2" >代码</td>
+    <td  rowspan="2">名称</td>
+    <td  rowspan="2">规格</td>
+    <td rowspan="2" >生产线</td>
+    <td rowspan="2" >源作业单编号</td>
+        <td colspan="2">源位置</td>
+        <td  colspan="2">转入位置</td>
+        <td  rowspan="2" >报废数量</td>
+        <td  rowspan="2" >备注</td>
+    </tr>
+  <tr class="STYLE1">
+    <td >名称</td>
+    <td >数量</td>
+    <td >名称</td>
+    <td >数量</td>
+  </tr>
+    {% for order in codelist %}
+        <tr class="STYLE1">
+            <td><input type="text" name="ddbh{{ order.codeindex }}" value="{{ order.ddbh }}" style="width:50px;">
+                <input type="hidden" name="id{{ order.codeindex }}" value="{{ order.id }}"></td>
+            <td>{{ order.code }}<input type="hidden" name="code{{ order.codeindex }}" value="{{ order.code }}"></td>
+            <td>{{ order.codename }}</td>
+            <td>{{ order.codegg }}</td>
+            <td>{{ order.scx }}</td>
+            <td><input type="text" name="yzydh{{ order.codeindex }}" value="{{ order.yzydh }}" style="width:50px;">{% if order.yzydherr  %}<span style="color:red;">{{ order.yzydherr }}</span>{% endif %}</td>
+            <td>
+                <select name="ywzname{{ order.codeindex }}"  style="width:70px;">
+                <option value="">------</option>
+                {% for p in productsitelist %}
+                    <option value="{{ p.pk }}"{% if p %} {% ifequal p.pk order.ywzname %}selected="selected" {% endifequal %}{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+            </select>
+               </td>
+            <td><input type="text" name="ywznum{{ order.codeindex }}" value="{{ order.ywznum }}" style="width:50px;">{% if order.ywznumerr  %}<span style="color:red;">{{ order.ywznumerr }}</span>{% endif %}</td>
+            <td>
+                <select name="zrwzname{{ order.codeindex }}"  style="width:70px;">
+                <option value="">------</option>
+                {% for p in productsitelist %}
+                    <option value="{{ p.pk }}" {% if p %} {% ifequal p.pk order.zrwzname %}selected="selected" {% endifequal %}{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+            </select>
+            </td>
+            <td><input type="text" name="zrwznum{{ order.codeindex }}" value="{{ order.zrwznum }}" style="width:50px;">{% if order.zrwznumerr  %}<span style="color:red;">{{ order.zrwznumerr }}</span>{% endif %}</td>
+            <td><input type="text" name="bfnum{{ order.codeindex }}" value="{{ order.bfnum }}" style="width:50px;">{% if order.bfnumerr  %}<span style="color:red;">{{ order.bfnumerr }}</span>{% endif %}</td>
+            <td><input type="text" name="bztext{{ order.codeindex }}" value="{{ order.bztext }}" style="width:50px;"></td>
+        </tr>
+    {% endfor %}
+    <tr>
+        <td colspan="11"><input type="submit" value="保存"></td>
+    </tr>
+  </table>
+  
+</form>
+{% endblock %}

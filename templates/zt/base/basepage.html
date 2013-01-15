@@ -1,0 +1,89 @@
+<html>
+<head>
+	<link href="/static/ts/css/css.css" rel="stylesheet" type="text/css">
+	<link href="/static/ts/css/form.css" rel="stylesheet" type="text/css">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	{% block js %}{% endblock %}
+</head>
+{% block body %}
+<body style="background:#ececec">
+	{% endblock %}
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+<tr>
+	<td><img src="/static/ts/image/frame/contentframetopleft.png" alt="" height="23" width="16"></td>
+	<td background="/static/ts/image/frame/contentframetopbackground.png">
+	<img src="/static/ts/image/frame/spacer.gif" alt="" height="23" width="540"></td>
+	<td><img src="/static/ts/image/frame/contentframetopright.png" alt="" height="23" width="16"></td>
+</tr>
+  <tr>
+    <td width="16" style="background:url('/static/ts/image/frame/contentframeleftbackground.png') repeat-y;">
+	<img src="/static/ts/image/frame/spacer.gif" alt="" width="16" height="1"></td>
+	<td>
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		  <tr>
+			<td width="12">
+			<img src="/static/ts/image/frame/cap_content_white_main_top_left.gif" alt="" width="12" height="11"></td>
+		    <td bgcolor="#FFFFFF"><img src="/static/ts/image/frame/spacer_10_x_10.gif" width="10" alt="" height="10"></td>
+			<td width="12"><img src="/static/ts/image/frame/cap_content_white_main_top_right.gif" width="12" alt="" 
+
+height="11"></td>
+		  </tr>
+		</table>
+		
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		  <tr>
+		    <td width="10" bgcolor="#FFFFFF">
+			<img src="/static/ts/image/frame/spacer_10_x_10.gif" alt="" width="10" height="10"></td>
+			<td bgcolor="#FFFFFF">
+				<table width="100%" border="0" cellspacing="0" cellpadding="5">
+				  <tr valign="top">
+					<td valign="top">
+					<table width="100%" border="0" cellspacing="0" cellpadding="0">
+					  <tr>
+					    <td>{% block navigator %}{% endblock %}</td>
+					  </tr>
+					  <tr>
+					    <td>&nbsp;</td>
+					  </tr>
+					  <tr>
+					    <td align="center">
+						{% block content %}
+						{% endblock %}
+						</td>
+					  </tr>
+					</table>
+					</td>
+				  </tr>
+				</table>
+				
+			</td>
+		    <td width="10" bgcolor="#FFFFFF">
+			<img src="/static/ts/image/frame/spacer_10_x_10.gif" alt="" width="10" height="10"></td>
+		  </tr>
+		</table>
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		  <tr>
+			<td width="12">
+			<img src="/static/ts/image/frame/cap_content_white_main_bottom_left.gif" alt="" width="12" height="11"></td>
+		    <td bgcolor="#FFFFFF">
+			<img src="/static/ts/image/frame/spacer_10_x_10.gif" alt="" width="10" height="10"></td>
+			<td width="12">
+			<img src="/static/ts/image/frame/cap_content_white_main_bottom_right.gif" alt="" width="12" height="11"></td>
+		  </tr>
+		</table>
+		
+		<td width="10" style="background:url('/static/ts/image/frame/contentframerightbackground.png') repeat-y;">
+<img src="/static/ts/image/frame/spacer.gif" alt="" width="16" height="1"></td>
+
+	</td>
+  </tr>
+  <tr>
+	<td><img src="/static/ts/image/frame/contentframebottomleft.png" height="23" alt="" width="16"></td>
+	<td background="/static/ts/image/frame/contentframebottombackground.png"><img src="/static/ts/image/frame/spacer.gif" alt="" height="23" 
+
+width="540"></td>
+	<td><img src="/static/ts/image/frame/contentframebottomright.png" alt="" height="23" width="16"></td>
+	</tr>
+</table>
+</body>
+</html>

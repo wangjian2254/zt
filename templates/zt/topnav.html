@@ -1,0 +1,54 @@
+﻿<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>XX系统</title>
+<link rel="stylesheet" href="/static/ts/css/hepu.css" type="text/css">
+<style type="text/css">
+<!--
+body {
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	background-color: #6c7a83;
+}
+a:link {
+	color: #FFFFFF;
+}
+a:visited {
+	color: #FFFFFF;
+}
+a:hover {
+	color: #FFFFFF;
+}
+.STYLE1 {color: #FFFFFF}
+-->
+</style></head>
+
+<body>
+<table width="100%" border="0" cellspacing="1" cellpadding="0">
+  <tr>
+    <td width="43%" height="50"><font style="color:#ffffff;font-family:黑体;font-size:25;margin-left:30px;">XX系统V1.0</font></td>
+    <td width="57%" align="right"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+      <td><h5><span class="STYLE1">
+          <a href="/zt/dataadd" target="mainFrame">数据录入</a>&nbsp;|&nbsp;
+          <a href="/zt/orderbblist" target="mainFrame">数据列表</a>&nbsp;|&nbsp;
+          <a href="/zt/dataadd" target="mainFrame">查询报表</a>&nbsp;|&nbsp;
+          <a href="/zt/dataadd" target="mainFrame">添加账户</a>&nbsp;
+          </span></h5>
+      </td>
+        <td >
+		<h5 align="right"><span class="STYLE1"><a >欢迎 <b>{{ user.get_full_name }}</b> {% if user.person.male %}先生{% else %}女士{% endif %}登录测试协同系统！</a>&nbsp;|&nbsp;<a href="/accounts/logout/?next=/" target="_parent">退出系统</a> &nbsp;| </span></h5></td>
+        <td width="106">
+		<div align="center">
+		<img src="/static/ts/image/frame/detailsicon.gif" width="23" height="23">&nbsp;&nbsp;
+		<img src="/static/ts/image/frame/infoicon.gif" width="24" height="24">&nbsp;&nbsp;
+		<img src="/static/ts/image/frame/helpicon.gif" width="24" height="24">
+		</div></td>
+      </tr>
+    </table></td>
+  </tr>
+  
+</table>
+</body>
+</html>

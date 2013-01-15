@@ -1,0 +1,75 @@
+﻿<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>订单追踪系统</title>
+		<style>
+			*{
+				margin:0px;
+				padding:0px;
+				font-size:12px;
+					
+			}
+		</style>
+		{% if message%}
+		<script language="JavaScript">
+			alert('{{message}}');
+		</script>
+		{%endif%}
+	</head>
+	<body style="background-color:#ececec" ><center style="vertical-align:middle;">
+		<table width="570px" height="100%">
+			<tr>
+				<td valign="middle"><form action="/accounts/login/" method="post">
+					<table width="570px" height="350px" style="background-image:url('/static/ts/image/login_empty.jpg')">
+						<tr>
+							<td><b><span style="padding-left:25px;font-size:32px;">订单追踪系统</span></b>
+
+							</td>
+						</tr>
+						<tr height="50px;">
+							<td style="vertical-align:top;">&nbsp;
+                                {% if form.errors %}
+                                <p style="padding-left:25px;color:red;">用户名或密码不对。</p>
+                                {% endif %}
+                            </td>
+						</tr>
+						<tr  height="20px;" >
+							<td style="padding-left:25px;">
+								用户名：
+							</td>
+						</tr>
+						<tr height="25px;">
+							<td style="padding-left:25px;">
+								<input type="text" name="username" value="" style="width:250px;">
+							</td>
+						</tr>
+						<tr height="20px;">
+							<td style="padding-left:25px;">
+								密码：
+							</td>
+						</tr>
+						<tr height="25px;">
+							<td style="padding-left:25px;">
+								<input type="password"  name="password" value=""  style="width:250px;">
+							</td>
+						</tr>
+						<tr height="25px;">
+							<td style="padding-left:25px;">
+								<input type="submit" value="登录" style="width:50px;">
+								<!--<input type="reset" value="清空"  style="width:50px; margin-left:15px;">-->
+								<input type="hidden" name="next" value="{{ next|escape }}" />
+								{% csrf_token %}
+							</td>
+						</tr>
+						<tr height="85px;">
+							<td align="center">
+                                <a href="/static/swf/订单追踪系统.url">快捷启动</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="/static/swf/flashplayer11.4_ax_071612.exe">下载flash player 插件。安装后才可正常工作。</a>
+							</td>
+						</tr>
+					</table></form>
+				</td>
+			</tr>
+		</table>
+	</center>
+	</body>
+</html>

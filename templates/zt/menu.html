@@ -1,0 +1,311 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="/static/ts/css/css.css" rel="stylesheet" type="text/css">
+	<script language="javascript" src="/static/ts/js/menu.js"></script>
+
+	
+	<script>
+	function closeMenus() {
+		Expand()
+		//Toggle('serversettings');
+		//Toggle('dataservices');
+		
+	}
+	function highlightLink(clickedLink) {
+		menuitemArray = document.getElementsByName('menuitem');
+		for (i=0;i<menuitemArray.length;i++) {
+			if (menuitemArray[i].className == 'leftMenuLinkTextHighlighted')
+				menuitemArray[i].className='leftMenuLinkText';
+		}
+		clickedLink.className='leftMenuLinkTextHighlighted';
+		//alert(frames.parent.frames['content'].location);
+	}
+	var highlightTimeout;
+	function highlightLinkOnload() {
+		// if the frame hasn't loaded yet (firefox issue)... keep calling the same function every second until it does and then clear the timeout
+		if (frames.parent.frames['mainFrame'].location == 'about:blank') {
+			highlightTimeout = setTimeout("highlightLinkOnload()",1000);// keep calling while it's blank...
+		} else {
+			clearTimeout(highlightTimeout);
+		}
+		menuitemArray = document.getElementsByName('menuitem');
+		for (i=0;i<menuitemArray.length;i++) {
+			if (frames.parent.frames['mainFrame'].location.toString().split('?')[0] == menuitemArray[i].href) {
+				menuitemArray[i].className='leftMenuLinkTextHighlighted';
+				if (menuitemArray[i].getAttribute('menuitemparent')!= 'management')
+					Toggle(menuitemArray[i].getAttribute('menuitemparent'));
+			}
+		}
+	}
+	</script>
+
+</head>
+
+
+<body style="background: #ececec url('/static/ts/image/frame/navframebackground.png') repeat-y;" onLoad="closeMenus();highlightLinkOnload();">
+
+<style>
+	h2{font-size: 1em;	}
+</style>
+
+
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+  <tr>
+	<td rowspan="3"><img src="/static/ts/image/frame/spacer.gif" alt="" width="10" height="10"></td>
+	<td>&nbsp;</td>
+	<td rowspan="3"><img src="/static/ts/image/frame/spacer.gif" alt="" width="5" height="10"></td>
+  </tr>
+  <tr>
+	<td>
+			<table border="0" cellspacing="0" cellpadding="0">
+			  <tr>
+				<td><img src="/static/ts/image/frame/spacer.gif" alt="" width="10" height="10"></td>
+			  </tr>
+			</table>
+		
+		<table class="menuBody">
+			  <tr>
+				<td class="menuTD" style="font-size:10px;">
+
+					<a class="leftMenuLinkText" style="font-size:10px;" href="javascript:Expand();">
+展开
+<img src="/static/ts/image/frame/expandallicon.gif" alt="" width="12" height="12" border="0" align="texttop"></a> /
+					<a class="leftMenuLinkText" style="font-size:10px;" href="javascript:Collapse();">
+收缩
+<img src="/static/ts/image/frame/collapseallicon.gif" alt="" width="12" height="12" border="0" align="texttop"></a>
+				</td>
+			</tr>
+		</table>
+				<table class="menuHeader" width="100%" border="0" cellspacing="0" cellpadding="0">
+
+					<tr>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topleft.png" width="6" alt="" height="5"></td>
+						<td width="100%" background="/static/ts/image/frame/cap_menuitem_topbackground.png" ><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topright.png" alt="" width="6" height="5"></td>
+					</tr>
+					<tr>
+						<td class="menuTDHeaderLeft"><img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+						<td width="100%" class="menuTDHeader"><a id="xmanagement" href="javascript:Toggle('management');"><img src='/static/ts/image/frame/arrow_opened.gif'  width='10' height='10' hspace='0' vspace='0' border='0'></a><img src="/static/ts/image/frame/spacer.gif" alt="" width="5" height="5"><a id="xmanagement" href="javascript:Toggle('management');" class="menuheaderText">我的办公桌</a></td>
+
+						<td class="menuTDHeaderRight"><img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+					</tr>
+					<tr>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomleft.png" alt="" width="6" height="5"></td>
+						<td background="/static/ts/image/frame/cap_menuitem_bottombackground.png"><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomright.png" alt="" width="6" height="5"></td>
+					</tr>
+				</table>
+				<div id="management">
+					<table class="menuBody" width="100%">
+								
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='management' href="/zt/dataadd">数据录入</a></td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='management' href="/subscribeInfo">站内短信</a>	</td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='management' href="/subscribeInfo">智能秘书</a>	</td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='management' href="/subscribeInfo">项目进度信息</a>	</td>
+								</tr>
+								
+						</table>
+				</div>
+<!---图库管理 --->
+
+				<table class="menuHeader" width="100%" border="0" cellspacing="0" cellpadding="0">
+					<tr>
+
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topleft.png" width="6" alt="" height="5"></td>
+						<td width="100%" background="/static/ts/image/frame/cap_menuitem_topbackground.png" ><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topright.png" alt="" width="6" height="5"></td>
+					</tr>
+					<tr>
+						<td class="menuTDHeaderLeft"><img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+						<td width="100%" class="menuTDHeader">
+						<a id="xserversettings" href="javascript:Toggle('serversettings');"><img src='/static/ts/image/frame/arrow_opened.gif'  width='10' height='10' hspace='0' vspace='0' border='0'></a><img src="/static/ts/image/frame/spacer.gif" alt="" width="5" height="5"><a id="xserversettings" href="javascript:Toggle('serversettings');" class="menuheaderText">项目模块管理</a>
+						</td>
+						<td class="menuTDHeaderRight">
+						<img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+
+					</tr>
+					<tr>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomleft.png" alt="" width="6" height="5"></td>
+						<td background="/static/ts/image/frame/cap_menuitem_bottombackground.png"><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomright.png" alt="" width="6" height="5"></td>
+					</tr>
+				</table>
+				<div id="serversettings">
+					<table class="menuBody" width="100%">
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='serversettings' href="/photoLibList">项目模块列表</a></td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='serversettings' href="/ts/TestMenu/">编辑项目模块</a></td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='serversettings' href="/user_PhotoLibList">配置模块维护人员</a></td>
+								</tr>
+																
+					</table>
+				</div>
+
+<!---图片文件管理 --->
+
+
+				<table class="menuHeader" width="100%" border="0" cellspacing="0" cellpadding="0">
+					<tr>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topleft.png" width="6" alt="" height="5"></td>
+						<td width="100%" background="/static/ts/image/frame/cap_menuitem_topbackground.png" ><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topright.png" alt="" width="6" height="5"></td>
+
+					</tr>
+					<tr>
+						<td class="menuTDHeaderLeft"><img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+						<td width="100%" class="menuTDHeader"><a id="xdataservices" href="javascript:Toggle('dataservices');"><img src='/static/ts/image/frame/arrow_opened.gif'  width='10' height='10' hspace='0' vspace='0' border='0'></a><img src="/static/ts/image/frame/spacer.gif" alt="" width="5" height="5"><a id="xdataservices" href="javascript:Toggle('dataservices');" class="menuheaderText">单元测试用例管理</a></td>
+						<td class="menuTDHeaderRight"><img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+					</tr>
+					<tr>
+
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomleft.png" alt="" width="6" height="5"></td>
+						<td background="/static/ts/image/frame/cap_menuitem_bottombackground.png"><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomright.png" alt="" width="6" height="5"></td>
+					</tr>
+				</table>
+				<div id="dataservices">
+					<table class="menuBody" width="100%">
+								<tr>
+									<td class="menuTD" width="13"></td>
+
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='dataservices' href="/photoInfo/0">测试用例结构分析</a></td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='dataservices' href="/photoUpload">编写测试用例</a></td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='dataservices' href="/photoUpload">审核测试用例</a></td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='dataservices' href="/photoUpload">测试用例变动日志</a></td>
+								</tr>
+								
+					</table>
+				</div>
+
+<!---用户管理 --->
+
+
+				<table class="menuHeader" width="100%" border="0" cellspacing="0" cellpadding="0">
+					<tr>
+
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topleft.png" width="6" alt="" height="5"></td>
+						<td width="100%" background="/static/ts/image/frame/cap_menuitem_topbackground.png" ><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topright.png" alt="" width="6" height="5"></td>
+					</tr>
+					<tr>
+						<td class="menuTDHeaderLeft"><img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+						<td width="100%" class="menuTDHeader">
+						<a id="xdebugginglogging" href="javascript:Toggle('debugginglogging');"><img src='/static/ts/image/frame/arrow_opened.gif'  width='10' height='10' hspace='0' vspace='0' border='0'></a><img src="/static/ts/image/frame/spacer.gif" alt="" width="5" height="5"><a id="xdebugginglogging" href="javascript:Toggle('debugginglogging');" class="menuheaderText">Bug管理</a></td>
+
+						<td class="menuTDHeaderRight"><img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+					</tr>
+					<tr>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomleft.png" alt="" width="6" height="5"></td>
+						<td background="/static/ts/image/frame/cap_menuitem_bottombackground.png"><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomright.png" alt="" width="6" height="5"></td>
+					</tr>
+				</table>
+				<div id="debugginglogging">
+
+					<table class="menuBody" width="100%">
+								
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='debugginglogging' href="/userInfo">举报Bug</a></td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='debugginglogging' href="/userAdd">Bug修复进度</a></td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='debugginglogging' href="/userAdd">测试日志</a></td>
+								</tr>
+					</table>
+
+				</div>
+
+<!---客户端返回信息管理 --->
+
+
+				<table class="menuHeader" width="100%" border="0" cellspacing="0" cellpadding="0">
+					<tr>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topleft.png" width="6" alt="" height="5"></td>
+						<td width="100%" background="/static/ts/image/frame/cap_menuitem_topbackground.png" ><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_topright.png" alt="" width="6" height="5"></td>
+					</tr>
+
+					<tr>
+						<td class="menuTDHeaderLeft"><img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+						<td width="100%" class="menuTDHeader"><a id="xrightcolumn" href="javascript:Toggle('rightcolumn');"><img src='/static/ts/image/frame/arrow_opened.gif'  width='10' height='10' hspace='0' vspace='0' border='0'></a><img src="/static/ts/image/frame/spacer.gif" alt="" width="5" height="5"><a id="xrightcolumn" href="javascript:Toggle('rightcolumn');" class="menuheaderText">客户端返回信息管理</a></td>
+						<td class="menuTDHeaderRight"><img src="/static/ts/image/frame/spacer.gif" alt="" width="1" height="5"></td>
+					</tr>
+					<tr>
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomleft.png" alt="" width="6" height="5"></td>
+						<td background="/static/ts/image/frame/cap_menuitem_bottombackground.png"><img src="/static/ts/image/frame/spacer.gif" alt="" width="60" height="5"></td>
+
+						<td width="6"><img src="/static/ts/image/frame/cap_menuitem_bottomright.png" alt="" width="6" height="5"></td>
+					</tr>
+				</table>
+				<div id="rightcolumn">
+					<table class="menuBody" width="100%">
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='rightcolumn' href="/userReplyList/0">回复信息表</a>									</td>
+								</tr>
+								<tr>
+									<td class="menuTD" width="13"></td>
+									<td class="menuTD">
+										<a class="leftMenuLinkText" name="menuitem" target="mainFrame" onClick="highlightLink(this);" menuitemparent='rightcolumn' href="/userReplyAdd">添加回复</a>									</td>
+								</tr>
+					</table>
+				</div>
+	</td>
+
+  </tr>
+</table>
+
+
+</body>
+
+</html>

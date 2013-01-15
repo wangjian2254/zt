@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<table width="400">
+    <tr>
+        <td>行号</td>
+        <td>订单列表id</td>
+        <td>订单编号</td>
+        <td>物料号</td>
+        <td>位置</td>
+    </tr>
+    {% for row in rows %}
+    <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ row.orderlist_id }}</td>
+        <td>{{ row.ddbh }}</td>
+        <td>{{ row.code }}</td>
+        <td>{{ row.site }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>
