@@ -231,7 +231,7 @@ def checkZZB(request):
 
     result=getOrderGenZongRow(request,datetime.now().strftime("%Y%m%d"),'open')
     sitelist=[]
-    for site in ProductSite.objects.all():
+    for site in ProductSite.objects.all().filter(type__in=[1,2]):
         sitelist.append(site)
     for row in result['result']['query']:
         for site in sitelist:
@@ -241,7 +241,7 @@ def checkZZB(request):
                 for yzydh in yzydhlist['result']['result']:
                     yzydhsynum+=yzydh['synum']
                 if row['wz'+str(site.id)+'synum']!=yzydhsynum:
-                    errorordergzlist.append({'orderlist_id':row['orderlist_id'],'ddbh':row['order'],'code':row['code'],'site':site.name})
+                    errorordergzlist.append({'orderlist_id':row['orderlist_id'],'ddbh':row['order'],'code':row['code'],'site':site.name,'synum':row['wz'+str(site.id)+'synum'],'zysynum':yzydhsynum,'countnum':row['wz'+str(site.id)+'synum']-yzydhsynum})
     return render_to_response('zt/errororderlist.html',{'rows':errorordergzlist})
 
 

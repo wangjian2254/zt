@@ -5,13 +5,16 @@
     <title></title>
 </head>
 <body>
-<table width="400">
+<table width="600">
     <tr>
         <td>行号</td>
         <td>订单列表id</td>
         <td>订单编号</td>
         <td>物料号</td>
-        <td>位置</td>
+        <td width="50">位置</td>
+        <td>剩余</td>
+        <td width="30">作业剩余</td>
+        <td>差额</td>
     </tr>
     {% for row in rows %}
     <tr>
@@ -20,6 +23,9 @@
         <td>{{ row.ddbh }}</td>
         <td>{{ row.code }}</td>
         <td>{{ row.site }}</td>
+        <td>{{ row.synum }}</td>
+        <td>{{ row.zysynum }}</td>
+        <td>{{ row.countnum }}</td>
     </tr>
     {% endfor %}
 </table>
