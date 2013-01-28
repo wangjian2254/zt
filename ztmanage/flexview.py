@@ -750,9 +750,13 @@ def getZYOrderGenZongByOrderAndSite(request,orderlist_id,site_id):
     return getZYOrderGenZongByOrderAndSite_fn(request,orderlist_id,site_id)
 
 def getZYOrderGenZongByOrderAndSite_fn(request,orderlist_id,site_id):
+    from zt.ztmanage.errorData import changeBBRow
     result=[]
     genzongmap={}
-    for orderbb in OrderBB.objects.filter(yorder=orderlist_id).filter(ywz=site_id):
+    query=OrderBB.objects.filter(yorder=orderlist_id).filter(ywz=site_id)
+    if (orderlist_id,site_id) in changeBBRow:
+        query=query.filter(id__gt=13078)
+    for orderbb in query:
         if not genzongmap.has_key(orderbb.yzydh.strip()):
             genzongmap[orderbb.yzydh.strip()]={'zydh':orderbb.yzydh.strip(),'zrnum':0,'zcnum':0,'ysnum':0,'bfnum':0}
         genzongmap[orderbb.yzydh.strip()]['zcnum']+=orderbb.ywznum-orderbb.ysnum-orderbb.bfnum
