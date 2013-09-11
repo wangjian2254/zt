@@ -483,7 +483,7 @@ def getOrderByBHAndCode(request,bh,code):
     code=Code.objects.filter(code=code)[:1]
 
     if len(orderno)>0 and len(code)>0:
-        return getResult(Order.objects.filter(ddbh=orderno[0].pk,code=code[0].pk))
+        return getResult(OrderList.objects.filter(ddbh=orderno[0].pk,code=code[0].pk))
     return getResult(None)
     pass
 @login_required
