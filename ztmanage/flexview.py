@@ -756,6 +756,7 @@ def getZYOrderGenZongByOrderAndSite2(request,orderlist_id,site_id):
     result = getZYOrderGenZongByOrderAndSite_fn(request,orderlist_id,site_id)
     result['result']['orderlist_id']=orderlist_id
     result['result']['site_id']=site_id
+    result['result']['len']=len(result['result']['result'])
     return result
 
 def getZYOrderGenZongByOrderAndSite_fn(request,orderlist_id,site_id):
