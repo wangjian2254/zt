@@ -337,7 +337,7 @@ def getOrderNoByBH(request,bh):
     pass
 @login_required
 def getOrderByBH(request,bh):
-    orderno=OrderNo.objects.filter(ddbh=bh)[:1]
+    orderno=OrderNo.objects.filter(ddbh=bh.upper())[:1]
     if len(orderno)>0:
         return getResult({'list':OrderList.objects.filter(ddbh=orderno[0].pk),'ddbh':orderno[0].ddbh,'bzname':orderno[0].bzname})
     return getResult(None)
@@ -748,6 +748,15 @@ def autoCompleteGenZong(request):
 @permission_required('ztmanage.user_view')
 def getZYOrderGenZongByOrderAndSite(request,orderlist_id,site_id):
     return getZYOrderGenZongByOrderAndSite_fn(request,orderlist_id,site_id)
+
+
+@login_required
+@permission_required('ztmanage.user_view')
+def getZYOrderGenZongByOrderAndSite2(request,orderlist_id,site_id):
+    result = getZYOrderGenZongByOrderAndSite_fn(request,orderlist_id,site_id)
+    result['result']['orderlist_id']=orderlist_id
+    result['result']['site_id']=site_id
+    return result
 
 def getZYOrderGenZongByOrderAndSite_fn(request,orderlist_id,site_id):
     from zt.ztmanage.errorData import changeBBRow
@@ -1283,6 +1292,7 @@ orderGateway = DjangoGateway({
   'service.getCodeExcel': getCodeExcel,
     'service.getOrderExcel': getOrderExcel,
     'service.getZYOrderGenZongByOrderAndSite': getZYOrderGenZongByOrderAndSite,
+    'service.getZYOrderGenZongByOrderAndSite2': getZYOrderGenZongByOrderAndSite2,
 #  'service.computeOrderMonitor': computeOrderMonitor,
 #  'service.getOrderBBNoByDate': getOrderBBNoByDate,
     })
