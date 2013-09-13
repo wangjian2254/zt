@@ -1130,6 +1130,118 @@ def getWriteExcel(request,date,headobj,nohead,rows):
     return getResult('http://'+request.META['HTTP_HOST']+'/static/excel/'+filename)
 
 
+@login_required
+def getWriteExcel2(request,date,headobj,nohead,rows):
+    nowritehead=nohead.keys()
+    head=headobj._amf_object
+    filename=date+'-'+str(uuid.uuid4())+'.xls'
+    style1=xlwt.XFStyle()
+    font1=Font()
+    font1.height=220
+    style1.font=font1
+    algn=Alignment()
+    algn.horz=Alignment.HORZ_RIGHT
+    style1.alignment=algn
+    style0=xlwt.XFStyle()
+    algn0=Alignment()
+    algn0.horz=Alignment.HORZ_CENTER
+    font=Font()
+    font.height=280
+    font.bold=True
+    style0.alignment=algn
+    style0.font=font
+#    font = xlwt.Font() #为样式创建字体
+#    font.name = 'Times New Roman'
+#    font.bold = True
+#    style1.font = font #为样式设置字体
+    wb=xlwt.Workbook()
+    ws=wb.add_sheet(date,cell_overwrite_ok=True)
+    zydhlengthead='maxlength'
+    col=0
+    for m,filedata in enumerate(head['index']):
+        if filedata  in nowritehead:
+            continue
+        if filedata=='qianxu' or filedata=='houxu':
+            subcol=col
+            wz=0
+            for subfiledata in head[head['index'][m]]['index']:
+                if subfiledata  in nowritehead:
+                    continue
+                if subcol==col:
+                    ws.write_merge(1,2,subcol-wz,subcol-wz,head[head['index'][m]][subfiledata],style0)
+                else:
+                    if (subcol-col)%8==1:
+                        wz+=1
+                        subcol+=1
+                        ws.write_merge(1,1,subcol-wz,subcol-wz+6,'%s1231'%head[head['index'][m]][subfiledata],style0)
+
+
+                        continue
+                    ws.write_merge(2,2,subcol-wz,subcol-wz,head[head['index'][m]][subfiledata],style0)
+                rownum=3
+
+                for i,data in enumerate(rows):
+                    maxlength=data[zydhlengthead]
+                    if maxlength>0:
+                        if data.has_key(subfiledata):
+                            ws.write_merge(rownum,rownum+maxlength-1,subcol-wz,subcol-wz,data[subfiledata],style1)
+                        else:
+                            ws.write_merge(rownum,rownum+maxlength-1,subcol-wz,subcol-wz,'',style1)
+                        rownum+=maxlength
+                    else:
+                        if data.has_key(subfiledata):
+                            ws.write(rownum,subcol-wz,data[subfiledata],style1)
+                        rownum+=1
+
+                subcol+=1
+                if subfiledata.find('synum')>-1:
+                    ws.write_merge(2,2,subcol-wz,subcol-wz,u'作业单号',style0)
+                    ws.col(subcol-wz).width = 256 * 20
+                    ws.write_merge(2,2,subcol-wz+1,subcol-wz+1,u'作业剩余',style0)
+                    ws.col(subcol-wz+1).width = 256 * 15
+                    rownum=3
+
+                    for i,data in enumerate(rows):
+                        maxlength=data[zydhlengthead]
+                        if maxlength>0:
+                            if data.has_key('%s2'%subfiledata):
+                                for j,zydata in enumerate(data['%s2'%subfiledata]):
+                                    if zydata.has_key('zydh'):
+                                        ws.write(rownum+j,subcol-wz,zydata['zydh'],style1)
+                                    if zydata.has_key('synum'):
+                                        ws.write(rownum+j,subcol-wz+1,zydata['synum'],style1)
+                                rownum+=maxlength
+                            else:
+                                rownum+=1
+                        else:
+                            rownum+=1
+
+                    subcol+=2
+            ws.write_merge(0,0,col,subcol-wz-1,head[head['index'][m]]['group'],style0)
+            col=subcol-wz
+            continue
+        ws.write_merge(0, 2,col,col,head[filedata], style0)
+        rownum=3
+
+        for i,data in enumerate(rows):
+            maxlength=data[zydhlengthead]
+            if maxlength>0:
+                if data.has_key(filedata):
+                    ws.write_merge(rownum,rownum+maxlength-1,col,col,data[filedata],style1)
+                else:
+                    ws.write_merge(rownum,rownum+maxlength-1,col,col,'',style1)
+                rownum+=maxlength
+                # ws.write(i+3,col,data[filedata],style1)
+            else:
+                if data.has_key(filedata):
+                    ws.write(rownum,col,data[filedata],style1)
+                rownum+=1
+        col+=1
+
+    wb.save(MEDIA_ROOT+'/excel/'+filename)
+    return getResult('http://'+request.META['HTTP_HOST']+'/static/excel/'+filename)
+
+
 
 @login_required
 def getOrderExcel(request,date,headobj,nohead,rows):
@@ -1289,6 +1401,7 @@ orderGateway = DjangoGateway({
   'service.getOrderGenZongByDate': getOrderGenZongByDate,
   'service.getOrderGenZongToday': getOrderGenZongToday,
   'service.getWriteExcel': getWriteExcel,
+  'service.getWriteExcel2': getWriteExcel2,
   'service.getOrderBBExcel': getOrderBBExcel,
   'service.getCodeExcel': getCodeExcel,
     'service.getOrderExcel': getOrderExcel,
