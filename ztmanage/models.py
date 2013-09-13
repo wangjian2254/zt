@@ -56,7 +56,7 @@ class ProductSite(models.Model):
     )
     name=models.CharField(max_length=40,verbose_name='名称',unique=True,help_text='生产线名称')
     type=models.CharField(max_length=10,choices=TYPE,verbose_name='流程类型',help_text='流程类型')
-    isaction=models.BooleanField(default=True,verbose_name='启用',null=False,blank=True)
+    isaction=models.BooleanField(default=True,verbose_name='启用',null=True,blank=True)
     index=models.IntegerField(verbose_name='排序',null=True,blank=True)
 #    name=models.CharField(max_length=40,verbose_name='名称',help_text='产品名称')
 #    gg=models.CharField(max_length=100,verbose_name='规格',help_text='产品规格')
