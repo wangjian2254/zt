@@ -1169,7 +1169,7 @@ def getWriteExcel2(request,date,headobj,nohead,rows):
                     if (subcol-col)%8==1:
                         wz+=1
                         subcol+=1
-                        ws.write_merge(1,1,subcol-wz,subcol-wz+6,'%s1231'%head[head['index'][m]][subfiledata],style0)
+                        ws.write_merge(1,1,subcol-wz,subcol-wz+6,head[head['index'][m]][subfiledata],style0)
 
 
                         continue
@@ -1180,9 +1180,10 @@ def getWriteExcel2(request,date,headobj,nohead,rows):
                     maxlength=data[zydhlengthead]
                     if maxlength>0:
                         if data.has_key(subfiledata):
-                            ws.write_merge(rownum,rownum+maxlength-1,subcol-wz,subcol-wz,data[subfiledata],style1)
-                        else:
-                            ws.write_merge(rownum,rownum+maxlength-1,subcol-wz,subcol-wz,'',style1)
+                            ws.write(rownum,subcol-wz,data[subfiledata],style1)
+                            # ws.write_merge(rownum,rownum+maxlength-1,subcol-wz,subcol-wz,data[subfiledata],style1)
+                        # else:
+                        #     ws.write_merge(rownum,rownum+maxlength-1,subcol-wz,subcol-wz,'',style1)
                         rownum+=maxlength
                     else:
                         if data.has_key(subfiledata):
@@ -1206,9 +1207,8 @@ def getWriteExcel2(request,date,headobj,nohead,rows):
                                         ws.write(rownum+j,subcol-wz,zydata['zydh'],style1)
                                     if zydata.has_key('synum'):
                                         ws.write(rownum+j,subcol-wz+1,zydata['synum'],style1)
-                                rownum+=maxlength
-                            else:
-                                rownum+=1
+                            rownum+=maxlength
+
                         else:
                             rownum+=1
 
@@ -1223,9 +1223,10 @@ def getWriteExcel2(request,date,headobj,nohead,rows):
             maxlength=data[zydhlengthead]
             if maxlength>0:
                 if data.has_key(filedata):
-                    ws.write_merge(rownum,rownum+maxlength-1,col,col,data[filedata],style1)
-                else:
-                    ws.write_merge(rownum,rownum+maxlength-1,col,col,'',style1)
+                    ws.write(rownum,col,data[filedata],style1)
+                    # ws.write_merge(rownum,rownum+maxlength-1,col,col,data[filedata],style1)
+                # else:
+                #     ws.write_merge(rownum,rownum+maxlength-1,col,col,'',style1)
                 rownum+=maxlength
                 # ws.write(i+3,col,data[filedata],style1)
             else:
