@@ -1079,7 +1079,7 @@ def getWriteExcel(request,date,headobj,nohead,rows):
     font=Font()
     font.height=280
     font.bold=True
-    style0.alignment=algn
+    style0.alignment=algn0
     style0.font=font
 #    font = xlwt.Font() #为样式创建字体
 #    font.name = 'Times New Roman'
@@ -1144,7 +1144,7 @@ def getWriteExcel2(request,date,headobj,nohead,rows):
     font=Font()
     font.height=280
     font.bold=True
-    style0.alignment=algn
+    style0.alignment=algn0
     style0.font=font
 #    font = xlwt.Font() #为样式创建字体
 #    font.name = 'Times New Roman'
@@ -1276,7 +1276,7 @@ def getOrderBBExcel(request,date,headobj,nohead,rows):#日报表导出
     font=Font()
     font.height=280
     font.bold=True
-    style0.alignment=algn
+    style0.alignment=algn0
     style0.font=font
     wb=xlwt.Workbook()
     ws=wb.add_sheet(date,cell_overwrite_ok=True)
