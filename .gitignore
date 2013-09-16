@@ -1,6 +1,8 @@
 # osx noise
 .DS_Store
 profile
+static/excel/
+static/logging/
 #python
 *.pyc
 .idea/workspace.xml
