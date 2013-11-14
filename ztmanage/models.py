@@ -234,5 +234,8 @@ class PlanDetail(models.Model):
     oldData = models.TextField(blank=True,null=True,verbose_name=u'退审时修改前的数据',help_text=u'用来在审核时，和修改的数据做比较，将其他数据用json方式保存')
 
 
-
+class PlanChangeLog(models.Model):
+    user = models.ForeignKey(User,verbose_name=u'操作人')
+    date = models.DateField(auto_now=True,verbose_name=u'发生日期')
+    count = models.IntegerField(default=0,verbose_name=u'修改条数',help_text=u'每一条planrecord算一条，一日内多次修改算一天的。')
 
