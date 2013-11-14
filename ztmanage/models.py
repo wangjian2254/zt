@@ -88,7 +88,7 @@ class OrderList(models.Model):
     cz=models.DecimalField(max_digits=14,decimal_places=2,verbose_name='产值',help_text='产值')
     createDate=models.DateTimeField(auto_now_add=True)
     closeDate=models.CharField(max_length=20,blank=True,null=True,verbose_name='订单关闭日期')
-    is_open=models.BooleanField(default=True,verbose_name='订单开关',help_text='订单是否关闭')
+    is_open=models.BooleanField(default=True,db_index=True,verbose_name='订单开关',help_text='订单是否关闭')
 
     #    name=models.CharField(max_length=40,verbose_name='名称',help_text='产品名称')
 #    gg=models.CharField(max_length=100,verbose_name='规格',help_text='产品规格')
@@ -103,7 +103,7 @@ class OrderList(models.Model):
         return self.ddbh
 
 class OrderBBNo(models.Model):
-    lsh=models.CharField(max_length=40,verbose_name='日报表流水号',help_text='日报表流水号')
+    lsh=models.CharField(max_length=40,db_index=True,verbose_name='日报表流水号',help_text='日报表流水号')
     user=models.ForeignKey(User,verbose_name='录入员',help_text='录入人员')
 
     class Admin():
@@ -129,7 +129,7 @@ class OrderBB(models.Model):
     lsh=models.ForeignKey(OrderBBNo,verbose_name='日报表流水号',help_text='日报表流水号')
 #    ddbh=models.ForeignKey(OrderNo,related_name='bbddbh',verbose_name='源订单编号',help_text='源订单编号')
     yorder=models.ForeignKey(OrderList,related_name='yuanorder',verbose_name='源订单')
-    yzydh=models.CharField(max_length=40,verbose_name='源作业单编号',help_text='源订单编号')
+    yzydh=models.CharField(max_length=40,db_index=True,verbose_name='源作业单编号',help_text='源订单编号')
     ywz=models.ForeignKey(ProductSite,related_name='ywz',null=True,blank=True,verbose_name='源位置')
     ywznum=models.IntegerField(null=True,blank=True,verbose_name='源位置流出数量')
     zrorder=models.ForeignKey(OrderList,related_name='zrorder',verbose_name='转入订单编号')
@@ -153,7 +153,7 @@ class OrderBB(models.Model):
         return '%s--%s'%(self.ddbh,self.code.code)
 
 class OrderGenZong(models.Model):
-    date=models.CharField(max_length=20,verbose_name='日期',help_text='日期')
+    date=models.CharField(max_length=20,db_index=True,verbose_name='日期',help_text='日期')
 #    ddbh=models.ForeignKey(OrderNo,related_name='genzongddbh',verbose_name='源订单编号',help_text='源订单编号')
 #    code=models.ForeignKey(Code,verbose_name='产品编号')
     order=models.ForeignKey(OrderList,related_name='ddgz',verbose_name='订单编号')
@@ -163,7 +163,7 @@ class OrderGenZong(models.Model):
     zcnum=models.IntegerField(default=0,verbose_name='转出数量')
     bfnum=models.IntegerField(default=0,verbose_name='报废数量')
     ysnum=models.IntegerField(default=0,verbose_name='遗失数量')
-    is_last=models.BooleanField(default=False,verbose_name='是否最后一次计算')
+    is_last=models.BooleanField(default=False,db_index=True,verbose_name='是否最后一次计算')
 
     class Admin():
         pass
@@ -187,3 +187,52 @@ class OrderGenZong(models.Model):
 ##        verbose_name_plural='项目组'
 #    def __unicode__(self):
 #        return '%s--%s'%(self.date,self.is_open)
+
+class PlanNo(models.Model):
+    TYPE=(
+        ('1','未审核'),
+        ('2','审核'),
+        ('3','退审'),
+
+    )
+
+    lsh = models.CharField(max_length=20,unique=True,verbose_name=u'主计划流水号',help_text=u'主计划流水号')
+    updateTime = models.DateField(auto_now=True,db_index=True,verbose_name=u'编制日期',help_text=u'每修改一次，改变一次')
+    firstcheckTime = models.DateField(auto_now=True,db_index=True,verbose_name=u'第一次审核日期',help_text=u'第一次审核')
+    lastcheckTime = models.DateField(auto_now=True,db_index=True,verbose_name=u'最后一次审核日期',help_text=u'最后一次审核')
+    bianzhi = models.ForeignKey(User,related_name='bianzhi',db_index=True,verbose_name=u'编制人',help_text=u'编制计划的用户')
+    shenhe = models.ForeignKey(User,related_name='shenhe',db_index=True,verbose_name=u'审核人',help_text=u'审核计划的用户')
+    status = models.CharField(choices=TYPE,max_length=5,db_index=True,verbose_name=u'状态',help_text=u'主计划的状态')
+    isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
+
+
+class PlanRecord(models.Model):
+    TYPE=(
+        (0,'非常紧急'),
+        (1,'一般紧急'),
+        (2,'标准生产'),
+        (3,'库备'),
+
+    )
+
+    planno = models.ForeignKey(PlanNo,verbose_name=u'流水号',help_text=u'主计划流水号')
+    orderlist=models.ForeignKey(OrderList,related_name='orderlist',verbose_name=u'订单项',help_text=u'订单中的一个物料')
+    zydh = models.CharField(max_length=100,blank=True,null=True,db_index=True,verbose_name=u'作业单号',help_text=u'作业单号可以为空，新投的物料是没有作业单号的，需要在物料投产后再补充')
+    plannum= models.IntegerField(verbose_name=u'计划数量',help_text=u'计划投入数量')
+
+    planbz = models.TextField(verbose_name=u'订单要求说明')
+    ordergongyi = models.TextField(verbose_name=u'订单要求工艺')
+    level = models.IntegerField(choices=TYPE,verbose_name=u'紧急程度',help_text=u'计划的紧急程度')
+
+class PlanDetail(models.Model):
+    planrecord = models.ForeignKey(PlanRecord,verbose_name=u'主计划',help_text=u'主计划的条目')
+    startdate=models.DateField(auto_now=True,db_index=True,verbose_name=u'计划投入日期',help_text=u'物料计划投入生产的日期')
+    enddate=models.DateField(auto_now=True,db_index=True,blank=True,null=True,verbose_name=u'计划完成日期',help_text=u'物料计划完成生产的日期,为空则是永久停留')
+    startsite = models.ForeignKey(ProductSite,db_index=True,related_name='startsite',verbose_name=u'起始作业区',help_text=u'生产的作业区')
+    endsite = models.ForeignKey(ProductSite,db_index=True,related_name='endsite',verbose_name=u'去向作业区',help_text=u'去向位置')
+
+    oldData = models.TextField(blank=True,null=True,verbose_name=u'退审时修改前的数据',help_text=u'用来在审核时，和修改的数据做比较，将其他数据用json方式保存')
+
+
+
+
