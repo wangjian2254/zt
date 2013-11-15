@@ -16,7 +16,9 @@ build/*
 *.pbxuser
 *.xcworkspace
 xcuserdata
-
+*.log
+*.cache
+*.url
 # svn & cvs
 .svn
 CVS
