@@ -6,9 +6,10 @@ Created on 2011-3-19
 '''
 from django.conf.urls.defaults import patterns
 from zt.ztmanage.views import  top, menu, welcome
-from zt.ztmanage.flexview import orderGateway,autoCompleteGenZong
+from zt.ztmanage.flexview import autoCompleteGenZong
 from zt.ztmanage.views import noperm, dataadd, codeupload, orderbbsave, orderbblist
 from zt.ztmanage.flexview import tiaozhengOrderBB
+from ztmanage.flexurls import orderGateway
 
 urlpatterns = patterns('^zt/$',
                        (r'^top/$', top),

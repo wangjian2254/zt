@@ -2,24 +2,18 @@
 #Date: 11-12-8
 #Time: 下午10:28
 import datetime
-import logging
 import os
-from random import randint
-#import traceback
-import traceback
 import uuid
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Permission
 import time
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
-from django.views.decorators.cache import cache_page
 from zt.settings import MEDIA_ROOT
 from zt.ztmanage.models import OrderBBNo, Scx, Code, ProductSite, OrderNo, OrderList, OrderBBLock, OrderBB, OrderGenZong
-from zt.ztmanage.errors import CompluteError, CompluteNumError
+from zt.ztmanage.errors import  CompluteNumError
 from django.db import transaction
 from zt.ztmanage.models import Ztperm
-from zt import settings
 from django.core.cache import cache
 from zt import xlwt
 from zt.xlwt.Formatting import Font, Alignment
@@ -30,13 +24,7 @@ __author__ = u'王健'
 def getResult(result,success=True,message=None):
     return {'result':result,'success':success,'message':message}
 
-from pyamf.remoting.gateway.django import DjangoGateway
-import pyamf
-try:
-    pyamf.register_class(User, 'django.contrib.auth.models.User')
-    pyamf.register_class(OrderBBNo, 'zt.ztmanage.models.OrderBBNo')
-except ValueError:
-    print "Class already registered"
+
 def login_required1(login=False):
     def islogin(func):
         def test(request, *args, **kwargs):
@@ -1355,58 +1343,6 @@ def getPickleObj(date,is_open):
         obj=pickle.load(f)
     return obj
 
-orderGateway = DjangoGateway({
-  'service.getUser': getUser,
-  'service.userhaschange': userhaschange,
-  'service.saveUser': saveUser,
-  'service.changeUserPassword': changeUserPassword,
-  'service.getAllUser': getAllUser,
-  'service.getUserById': getUserById,
-  'service.getAllScx': getAllScx,
-  'service.getScxById': getScxById,
-  'service.saveScx': saveScx,
-#  'service.delScx': delScx,
-  'service.getAllCode': getAllCode,
-#  'service.delCode': delCode,
-  'service.saveCode': saveCode,
-  'service.getCodeByCode': getCodeByCode,
-  'service.getCodeById': getCodeById,
-  'service.getAllProductSite': getAllProductSite,
-  'service.saveSite': saveSite,
-  'service.delSite': delSite,
-  'service.openSite': openSite,
-  'service.getProductSiteById': getProductSiteById,
-  'service.getAllOrderNo': getAllOrderNo,
-  'service.getOrderNoById': getOrderNoById,
-  'service.getOrderNoByBH': getOrderNoByBH,
-  'service.getOrderByBH': getOrderByBH,
-  'service.getAllOrderList': getAllOrderList,
-  'service.setOrderListClose': setOrderListClose,
-  'service.getOrderIsOpen': getOrderIsOpen,
-  'service.saveOrder': saveOrder,
-  'service.delOrder': delOrder,
-  'service.getOrderByBHAndCode': getOrderByBHAndCode,
-  'service.getOrderAllBBNo': getOrderAllBBNo,
-  'service.getOrderBBNoByUser': getOrderBBNoByUser,
-  'service.getOrderBBNoByDate': getOrderBBNoByDate,
-  'service.getOrderBBNoByDateQJ': getOrderBBNoByDateQJ,
-  'service.getNewOrderBBNoByUser': getNewOrderBBNoByUser,
-  'service.delOrderBB': delOrderBB,
-  'service.saveOrderBB': saveOrderBB,
-  'service.isOrderBBNoUnlock': isOrderBBNoUnlock,
-  'service.getOrderBBByLsh': getOrderBBByLsh,
-  'service.getOrderGenZongByDate': getOrderGenZongByDate,
-  'service.getOrderGenZongToday': getOrderGenZongToday,
-  'service.getWriteExcel': getWriteExcel,
-  'service.getWriteExcel2': getWriteExcel2,
-  'service.getOrderBBExcel': getOrderBBExcel,
-  'service.getCodeExcel': getCodeExcel,
-    'service.getOrderExcel': getOrderExcel,
-    'service.getZYOrderGenZongByOrderAndSite': getZYOrderGenZongByOrderAndSite,
-    'service.getZYOrderGenZongByOrderAndSite2': getZYOrderGenZongByOrderAndSite2,
-#  'service.computeOrderMonitor': computeOrderMonitor,
-#  'service.getOrderBBNoByDate': getOrderBBNoByDate,
-    })
 def cacheScx():
     scxmap={}
     for scx in Scx.objects.all():

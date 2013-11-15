@@ -14,6 +14,15 @@ class Ztperm(models.Model):
             ('user_update',u'日报表修改'),
             ('user_view',u'查询人员'),
             ('user_change',u'维护人员'),
+
+
+            ('plan_update',u'主计划编制'),
+            ('plan_check',u'主计划审核'),
+            ('plan_uncheck',u'主计划退审'),
+            ('plan_all',u'主计划汇总'),
+            ('plan_query',u'主计划查询'),
+            ('plan_changerecord',u'主计划修改记录'),
+
         )
     for code,codename in Meta.permissions:
         perm['ztmanage.'+code]=codename
