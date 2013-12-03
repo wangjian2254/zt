@@ -6,7 +6,6 @@ import os
 import uuid
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Permission
-import time
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from zt.settings import MEDIA_ROOT
@@ -18,11 +17,10 @@ from django.core.cache import cache
 from zt import xlwt
 from zt.xlwt.Formatting import Font, Alignment
 import pickle
+from zt.ztmanage.tools import getResult
 
 __author__ = u'王健'
 
-def getResult(result,success=True,message=None):
-    return {'result':result,'success':success,'message':message}
 
 
 def login_required1(login=False):

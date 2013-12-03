@@ -23,6 +23,9 @@ class Ztperm(models.Model):
             ('plan_query',u'主计划查询'),
             ('plan_changerecord',u'主计划修改记录'),
 
+
+            ('orderruning',u'订单执行情况汇总表'),
+
         )
     for code,codename in Meta.permissions:
         perm['ztmanage.'+code]=codename

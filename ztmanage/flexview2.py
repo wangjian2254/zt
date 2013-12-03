@@ -1,8 +1,11 @@
 #coding=utf-8
 #Date: 11-12-8
 #Time: 下午10:28
+import datetime,time
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db import transaction
+from ztmanage.models import OrderList, OrderNo, OrderBB
+from ztmanage.tools import getResult
 
 __author__ = u'王健'
 '''
@@ -68,6 +71,66 @@ def changerecordPlan(request,obj):
 @transaction.commit_on_success
 def changerecordPlanDelete(request,obj):
     pass
+
+
+@login_required
+def getOrderEndDate(request,ddbhid):
+    ddbh = OrderNo.objects.get(pk=ddbhid)
+    lsh=''
+    for b in OrderBB.objects.filter(yorder__in=OrderList.objects.filter(ddbh=ddbh)).order_by('-id')[:1]:
+        lsh = b.lsh.lsh
+
+    if lsh:
+        return getResult({'ddbhid':ddbhid,'date': datetime.datetime.strptime(lsh.split('-')[0], '%Y%m%d') })
+    else:
+        return getResult({'ddbhid':ddbhid,'date':datetime.datetime.now() })
+
+@login_required
+@permission_required('ztmanage.orderruning')
+def getOrderRuningList(request,start,end,isclose):
+    orderlistquery = OrderList.objects.filter(createDate__gte=datetime.datetime.strptime(start,'%Y%m%d')).filter(createDate__lte=datetime.datetime.strptime(end,'%Y%m%d')+datetime.timedelta(hours =24))
+    #if isclose=='open':
+    #    orderlistquery = orderlistquery.filter(is_open=True)
+    #else:
+    #    orderlistquery = orderlistquery.filter(is_open=False)
+    orderbhids = set()
+    for ol in orderlistquery:
+        orderbhids.add(ol.ddbh_id)
+    orderdict = {}
+    for o in OrderNo.objects.filter(pk__in=orderbhids):
+        orderdict[str(o.pk)]={'id':o.pk,'ddbh':o.ddbh,'xddate':None,'lr':'','orderlistnum':0,'productnum':0,'closeorderlistnum':0,'openorderlistnum':0,'closeflag':0}
+    for ol in OrderList.objects.filter(ddbh__in=orderbhids).order_by('createDate'):
+        orderdict[str(ol.ddbh_id)]['xddate']=ol.createDate
+        orderdict[str(ol.ddbh_id)]['orderlistnum']+=1
+        orderdict[str(ol.ddbh_id)]['productnum']+=ol.num
+        if ol.is_open:
+            orderdict[str(ol.ddbh_id)]['openorderlistnum']+=1
+        else:
+            orderdict[str(ol.ddbh_id)]['closeorderlistnum']+=1
+    delkeys =[]
+    for v in orderdict.values():
+        if isclose == 'open':
+            if v['openorderlistnum'] ==0:
+                delkeys.append(str(v['id']))
+        elif isclose == 'close':
+            if v['openorderlistnum']!=0:
+                delkeys.append(str(v['id']))
+        if v['openorderlistnum']==0:
+            v['closeflag']=1
+    for k in delkeys:
+        del orderdict[k]
+    l = list(orderbhids)
+    l.sort()
+    resultlist =[]
+    for k in l:
+        if orderdict.has_key(str(k)):
+            resultlist.append(orderdict[str(k)])
+    return getResult(resultlist)
+
+
+
+
+
 
 
 

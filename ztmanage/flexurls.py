@@ -3,7 +3,7 @@
 #Time: 下午10:28
 from django.contrib.auth.models import User
 from ztmanage.flexview import getUser, userhaschange, saveUser, changeUserPassword, getAllUser, getUserById, getAllScx, getScxById, saveScx, getAllCode, saveCode, getCodeByCode, getCodeById, getAllProductSite, saveSite, delSite, openSite, getProductSiteById, getAllOrderNo, getOrderNoById, getOrderNoByBH, getOrderByBH, getAllOrderList, setOrderListClose, getOrderIsOpen, saveOrder, delOrder, getOrderByBHAndCode, getOrderAllBBNo, getOrderBBNoByUser, getOrderBBNoByDate, getOrderBBNoByDateQJ, getNewOrderBBNoByUser, delOrderBB, saveOrderBB, isOrderBBNoUnlock, getOrderBBByLsh, getOrderGenZongByDate, getOrderGenZongToday, getWriteExcel, getWriteExcel2, getOrderBBExcel, getCodeExcel, getOrderExcel, getZYOrderGenZongByOrderAndSite, getZYOrderGenZongByOrderAndSite2
-from ztmanage.flexview2 import updatePlan, checkPlan, uncheckPlan, allPlan, queryPlan, changerecordPlan, changerecordPlanDelete, updatePlanDelete
+from ztmanage.flexview2 import updatePlan, checkPlan, uncheckPlan, allPlan, queryPlan, changerecordPlan, changerecordPlanDelete, updatePlanDelete, getOrderRuningList, getOrderEndDate
 from ztmanage.models import OrderBBNo
 
 __author__ = u'王健'
@@ -73,4 +73,8 @@ orderGateway = DjangoGateway({
   'service.queryPlan': queryPlan,
   'service.changerecordPlan': changerecordPlan,
   'service.changerecordPlanDelete': changerecordPlanDelete,
+
+
+  'service.getOrderRuningList': getOrderRuningList,
+  'service.getOrderEndDate': getOrderEndDate,
     })
