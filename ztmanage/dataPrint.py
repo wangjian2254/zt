@@ -41,16 +41,6 @@ def downloadTrue(request):
     ws.write_merge(rownum, rownum, 3, 3, u'地址', style1)
     ws.write_merge(rownum, rownum, 4, 4, u'错误原因', style1)
 
-    rownum += 1
-    for o in Truename.objects.filter(status=2).order_by('datetime'):
-        ws.write_merge(rownum, rownum, 0, 0, o.tel, style1)
-        ws.write_merge(rownum, rownum, 1, 1,o.name , style1)
-        ws.write_merge(rownum, rownum, 2, 2,o.number, style1)
-        ws.write_merge(rownum, rownum, 3, 3, o.address, style1)
-        ws.write_merge(rownum, rownum, 4, 4, o.help, style1)
 
-        rownum += 1
-    for i in range(5):
-        ws.col(i).width = 256 * 20
     wb.save(response)
     return response
