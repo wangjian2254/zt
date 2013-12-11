@@ -100,7 +100,7 @@ def getOrderRuningList(request,start,end,isclose):
     for o in OrderNo.objects.filter(pk__in=orderbhids):
         orderdict[str(o.pk)]={'id':o.pk,'ddbh':o.ddbh,'xddate':None,'lr':'','orderlistnum':0,'productnum':0,'closeorderlistnum':0,'openorderlistnum':0,'closeflag':0}
     for ol in OrderList.objects.filter(ddbh__in=orderbhids).order_by('createDate'):
-        orderdict[str(ol.ddbh_id)]['xddate']=ol.createDate
+        orderdict[str(ol.ddbh_id)]['xddate']=ol.createDate.strftime('%Y/%m/%d')
         orderdict[str(ol.ddbh_id)]['orderlistnum']+=1
         orderdict[str(ol.ddbh_id)]['productnum']+=ol.num
         if ol.is_open:

@@ -9,6 +9,7 @@ from zt.ztmanage.views import  top, menu, welcome
 from zt.ztmanage.flexview import autoCompleteGenZong
 from zt.ztmanage.views import noperm, dataadd, codeupload, orderbbsave, orderbblist
 from zt.ztmanage.flexview import tiaozhengOrderBB
+from ztmanage.dataPrint import getExcelByData
 from ztmanage.flexurls import orderGateway
 
 urlpatterns = patterns('^zt/$',
@@ -20,6 +21,7 @@ urlpatterns = patterns('^zt/$',
                        (r'^codeupload/$', codeupload),
                        (r'^orderbbsave$', orderbbsave),
                        (r'^orderbblist$', orderbblist),
+                       (r'^getExcelByData$', getExcelByData),
                        (r'^auto', autoCompleteGenZong),
 #                       (r'^tiaozheng', tiaozhengOrderBB),
                        (r'^geteway/', orderGateway

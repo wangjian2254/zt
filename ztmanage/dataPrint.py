@@ -2,16 +2,26 @@
 #Date: 11-12-8
 #Time: 下午10:28
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
+import json
+from django.views.decorators.csrf import  csrf_exempt
 
 __author__ = u'王健'
 
 
 @login_required
-def downloadTrue(request):
+@csrf_exempt
+def getExcelByData(request):
+    data = request.POST.get('data','')
+    if data:
+        data = json.loads(data)
+    else:
+        raise Http404()
+
     response = HttpResponse(mimetype=u'application/ms-excel')
-    excelname = request.POST.get('excelname','')
-    filename = u'订单执行情况汇总表-%s.xls'%excelname
+    excelname = data.get('excelname','')
+    sheetname = data.get('sheetname','')
+    filename = u'%s.xls'%excelname
     response['Content-Disposition'] = (u'attachment;filename=%s' % filename).encode('utf-8')
     import xlwt
     from xlwt import Font, Alignment
@@ -33,14 +43,15 @@ def downloadTrue(request):
     style0.font=font
 
     wb = xlwt.Workbook()
-    ws = wb.add_sheet(u"订单执行情况汇总表", cell_overwrite_ok=True)
+    ws = wb.add_sheet(u"%s"%sheetname, cell_overwrite_ok=True)
     rownum = 0
-    ws.write_merge(rownum, rownum, 0, 0, u'手机号', style1)
-    ws.write_merge(rownum, rownum, 1, 1, u'姓名', style1)
-    ws.write_merge(rownum, rownum, 2, 2, u'身份证号', style1)
-    ws.write_merge(rownum, rownum, 3, 3, u'地址', style1)
-    ws.write_merge(rownum, rownum, 4, 4, u'错误原因', style1)
-
-
+    for i,index in enumerate(data.get('index',[])):
+        ws.write_merge(rownum, rownum, i, i, data.get('head',{}).get(index,""), style0)
+        ws.col(i).width = 256 * 15
+    rownum+=1
+    for row,d in enumerate(data.get('data',[])):
+        for i,index in enumerate(data.get('index',[])):
+            ws.write_merge(rownum+row, rownum+row, i, i, d.get(index,""), style1)
+        rownum+=1
     wb.save(response)
     return response
