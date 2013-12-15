@@ -80,14 +80,14 @@ def getAllUser(request):
     pass
 @login_required
 def userhaschange(request):
-    if request.user.has_perm('ztmanage.user_change'):
+    if request.user.has_perm('ztmanage.user_manager'):
         return getResult(True)
     else:
         return getResult(False)
     pass
 
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.user_manager')
 @transaction.commit_on_success
 def saveUser(request,obj):
     u=User()
@@ -136,7 +136,7 @@ def getUserById(request,id):
     pass
 
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.scx_manager')
 @transaction.commit_on_success
 def saveScx(request,scxlist):
     for s in scxlist:
@@ -155,7 +155,7 @@ def saveScx(request,scxlist):
     pass
 
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.scx_manager')
 @transaction.commit_on_success
 def delScx(request,scxlist):
     l=[]
@@ -200,7 +200,7 @@ def getAllCode(request):
     return getResult(result)
     pass
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.code_manager')
 @transaction.commit_on_success
 def delCode(request,idlist):
     l=[]
@@ -213,7 +213,7 @@ def delCode(request,idlist):
     return getResult(True)
     pass
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.code_manager')
 @transaction.commit_on_success
 def saveCode(request,obj):
     code=Code()
@@ -253,7 +253,7 @@ def getAllProductSite(request):
     return getResult(result)
     pass
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.site_manager')
 @transaction.commit_on_success
 def saveSite(request,obj):
     s=ProductSite()
@@ -271,7 +271,7 @@ def saveSite(request,obj):
     return getResult(True)
     pass
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.site_manager')
 @transaction.commit_on_success
 def delSite(request,idlist):
     l=[]
@@ -284,7 +284,7 @@ def delSite(request,idlist):
     return getResult(True)
     pass
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.site_manager')
 @transaction.commit_on_success
 def openSite(request,idlist):
     l=[]
@@ -411,7 +411,7 @@ def setOrderListClose(request,orderlistid):
         return getResult(False,False,'关闭订单失败。')
 
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.order_manager')
 @transaction.commit_on_success
 def delOrder(request,idlist):
     l=[]
@@ -424,7 +424,7 @@ def delOrder(request,idlist):
     return getResult(True)
     pass
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.order_manager')
 @transaction.commit_on_success
 def saveOrder(request,orderlist,ddbh,bhname):
     orderNo=OrderNo.objects.filter(ddbh=ddbh)[:1]

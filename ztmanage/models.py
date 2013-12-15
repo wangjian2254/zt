@@ -12,8 +12,13 @@ class Ztperm(models.Model):
         permissions=(
             ('user_add',u'日报表录人'),
             ('user_update',u'日报表修改'),
-            ('user_view',u'查询人员'),
-            ('user_change',u'维护人员'),
+            ('user_view',u'日报表查询'),
+
+            ('user_manager',u'人员管理'),
+            ('scx_manager',u'生产线管理'),
+            ('code_manager',u'物料管理'),
+            ('site_manager',u'位置管理'),
+            ('order_manager',u'订单管理'),
 
 
             ('plan_update',u'主计划编制'),
@@ -24,6 +29,7 @@ class Ztperm(models.Model):
             ('plan_changerecord',u'主计划修改记录'),
 
 
+            ('order_zhuizong',u'订单追踪'),
             ('orderruning',u'订单执行情况汇总表'),
 
         )
