@@ -80,7 +80,7 @@ def getAllUser(request):
     pass
 @login_required
 def userhaschange(request):
-    if request.user.has_perm('ztmanage.user_manager'):
+    if request.user.has_perm('ztmanage.order_zhuizong'):
         return getResult(True)
     else:
         return getResult(False)
@@ -251,7 +251,15 @@ def getAllProductSite(request):
     result=sitelist
     cache.set('allsite',result,60*60*2)
     return getResult(result)
-    pass
+
+@login_required
+def getAllOpenProductSite(request):
+    sitelist=[]
+    for site in ProductSite.objects.filter(isaction=True).all().order_by('index'):
+        sitelist.append(site)
+    result=sitelist
+    return getResult(result)
+
 @login_required
 @permission_required('ztmanage.site_manager')
 @transaction.commit_on_success
