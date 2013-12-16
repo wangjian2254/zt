@@ -357,7 +357,7 @@ def getOrderIsOpen(request):
     pass
 
 @login_required
-@permission_required('ztmanage.user_change')
+@permission_required('ztmanage.order_zhuizong')
 @transaction.commit_manually
 def setOrderListClose(request,orderlistid):
     try:
@@ -692,14 +692,14 @@ def getOrderBBByLsh(request,lshstr):
     pass
 
 @login_required
-@permission_required('ztmanage.user_view')
+@permission_required('ztmanage.order_zhuizong')
 @transaction.commit_on_success
 def getOrderGenZongToday(request,datestart,is_open,ddbh=None,code=None):
 
     return getOrderGenZongByDate(request,datestart,is_open,None,None,True)
 
 @login_required
-@permission_required('ztmanage.user_view')
+@permission_required('ztmanage.order_zhuizong')
 @transaction.commit_on_success
 def getOrderGenZongByDate(request,datestart,is_open,ddbh=None,code=None,allsite=False):
     if is_open=='open':
@@ -731,13 +731,13 @@ def autoCompleteGenZong(request):
 
 
 @login_required
-@permission_required('ztmanage.user_view')
+@permission_required('ztmanage.order_zhuizong')
 def getZYOrderGenZongByOrderAndSite(request,orderlist_id,site_id):
     return getZYOrderGenZongByOrderAndSite_fn(request,orderlist_id,site_id)
 
 
 @login_required
-@permission_required('ztmanage.user_view')
+@permission_required('ztmanage.order_zhuizong')
 def getZYOrderGenZongByOrderAndSite2(request,orderlist_id,site_id):
     result = getZYOrderGenZongByOrderAndSite_fn(request,orderlist_id,site_id)
     result['result']['orderlist_id']=orderlist_id
