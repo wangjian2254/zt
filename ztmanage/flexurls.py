@@ -2,9 +2,9 @@
 #Date: 11-12-8
 #Time: 下午10:28
 from django.contrib.auth.models import User
-from ztmanage.flexview import getUser, userhaschange, saveUser, changeUserPassword, getAllUser, getUserById, getAllScx, getScxById, saveScx, getAllCode, saveCode, getCodeByCode, getCodeById, getAllProductSite, saveSite, delSite, openSite, getProductSiteById, getAllOrderNo, getOrderNoById, getOrderNoByBH, getOrderByBH, getAllOrderList, setOrderListClose, getOrderIsOpen, saveOrder, delOrder, getOrderByBHAndCode, getOrderAllBBNo, getOrderBBNoByUser, getOrderBBNoByDate, getOrderBBNoByDateQJ, getNewOrderBBNoByUser, delOrderBB, saveOrderBB, isOrderBBNoUnlock, getOrderBBByLsh, getOrderGenZongByDate, getOrderGenZongToday, getWriteExcel, getWriteExcel2, getOrderBBExcel, getCodeExcel, getOrderExcel, getZYOrderGenZongByOrderAndSite, getZYOrderGenZongByOrderAndSite2, getAllOpenProductSite
-from ztmanage.flexview2 import updatePlan, checkPlan, uncheckPlan, allPlan, queryPlan, changerecordPlan, changerecordPlanDelete, updatePlanDelete, getOrderRuningList, getOrderEndDate
-from ztmanage.models import OrderBBNo
+from zt.ztmanage.flexview import getUser, userhaschange, saveUser, changeUserPassword, getAllUser, getUserById, getAllScx, getScxById, saveScx, getAllCode, saveCode, getCodeByCode, getCodeById, getAllProductSite, saveSite, delSite, openSite, getProductSiteById, getAllOrderNo, getOrderNoById, getOrderNoByBH, getOrderByBH, getAllOrderList, setOrderListClose, getOrderIsOpen, saveOrder, delOrder, getOrderByBHAndCode, getOrderAllBBNo, getOrderBBNoByUser, getOrderBBNoByDate, getOrderBBNoByDateQJ, getNewOrderBBNoByUser, delOrderBB, saveOrderBB, isOrderBBNoUnlock, getOrderBBByLsh, getOrderGenZongByDate, getOrderGenZongToday, getWriteExcel, getWriteExcel2, getOrderBBExcel, getCodeExcel, getOrderExcel, getZYOrderGenZongByOrderAndSite, getZYOrderGenZongByOrderAndSite2, getAllOpenProductSite
+from zt.ztmanage.flexview2 import updatePlan, checkPlan, uncheckPlan, allPlan, queryPlan, changerecordPlan, changerecordPlanDelete, updatePlanDelete, getOrderRuningList, getOrderEndDate
+from zt.ztmanage.models import OrderBBNo
 
 __author__ = u'王健'
 from pyamf.remoting.gateway.django import DjangoGateway

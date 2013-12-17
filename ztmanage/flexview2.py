@@ -1,11 +1,11 @@
 #coding=utf-8
 #Date: 11-12-8
 #Time: 下午10:28
-import datetime,time
+import datetime
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db import transaction
-from ztmanage.models import OrderList, OrderNo, OrderBB
-from ztmanage.tools import getResult
+from zt.ztmanage.models import OrderList, OrderNo, OrderBB
+from zt.ztmanage.tools import getResult
 
 __author__ = u'王健'
 '''

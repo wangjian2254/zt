@@ -80,7 +80,8 @@ ADMIN_MEDIA_PREFIX = '/media/'
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'g9sdfwchq!bcrb$*^qlqh-sao&zaj5+=4^(+uf1%ue!pqsd0l#'
 
-CACHE_BACKEND = 'locmem:///?timeout=30&max_entries=5000'
+CACHE_BACKEND = 'db://cache_data/?timeout=300&max_entries=5000'
+#CACHE_BACKEND = 'locmem:///?timeout=30&max_entries=5000'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
