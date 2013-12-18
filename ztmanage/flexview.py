@@ -366,7 +366,7 @@ def getOrderIsOpen(request):
 
 @login_required
 @permission_required('ztmanage.order_zhuizong')
-@transaction.commit_manually
+@transaction.commit_on_success
 def setOrderListClose(request,orderlistid):
     try:
         date=datetime.datetime.now().strftime("%Y%m%d")
@@ -391,13 +391,14 @@ def setOrderListClose(request,orderlistid):
         OrderGenZong.objects.filter(pk__in=delordergenzongid).delete()
         for o in closeordergenzongmap.values():
             o.save()
-        opendata=None
+        #opendata=None
         closedata=None
 
-        if hasFile(date,True):
-            opendata=getPickleObj(date,True)
-            if hasFile(date,False):
-                closedata=getPickleObj(date,False)
+        #if hasFile(date,True):
+        opendata=getPickleObj(date,True)
+            #if hasFile(date,False):
+        if opendata:
+            closedata=getPickleObj(date,False)
         if opendata :
             closerow=[]
             for row in opendata['result']['query']:
@@ -411,11 +412,11 @@ def setOrderListClose(request,orderlistid):
             savePickle(date,True,opendata)
             if closedata:
                 savePickle(date,False,closedata)
-        transaction.commit()
+        #transaction.commit()
         cache.delete('getOrderIsOpen')
         return getResult(closeorderlistid)
     except :
-        transaction.rollback()
+        #transaction.rollback()
         return getResult(False,False,'关闭订单失败。')
 
 @login_required
@@ -554,32 +555,33 @@ def newOrderBBNoByUser(user):
         return lsh
     else:
         return date+'-'+('000'+str(user.pk))[-3:]+'-'+'0000'[-4:]
+
+@transaction.commit_on_success
+def delOrderBBfun(request,idlist):
+    date=datetime.datetime.now().strftime("%Y%m%d")
+    l=[]
+    for obj in idlist:
+        l.append(obj['id'])
+    if len(l)>0:
+        lsh=OrderBB.objects.get(pk=l[0])
+
+        if lsh.lsh.lsh.find(date)!=0:
+            #transaction.rollback()
+            return getResult(False,False,'只能修改当天的报表。')
+    else:
+        return getResult(True)
+    qs=OrderBB.objects.filter(pk__in=l)
+    computeOrderMonitorByLsh(lsh.lsh.lsh.split('-')[0],qs,'jian')
+    qs.delete()
+    delFile(date,True)
+    #transaction.commit()
+    return getResult(l)
 @login_required
 @permission_required('ztmanage.user_add')
 @orderbbdel_required('ztmanage.user_update')
-@transaction.commit_manually
 def delOrderBB(request,idlist):
     try:
-        date=datetime.datetime.now().strftime("%Y%m%d")
-        computeOrder=[]
-        orderGenZongMap={}
-        l=[]
-        for obj in idlist:
-            l.append(obj['id'])
-        if len(l)>0:
-            lsh=OrderBB.objects.get(pk=l[0])
-
-            if lsh.lsh.lsh.find(date)!=0:
-                transaction.rollback()
-                return getResult(False,False,'只能修改当天的报表。')
-        else:
-            return getResult(True)
-        qs=OrderBB.objects.filter(pk__in=l)
-        computeOrderMonitorByLsh(lsh.lsh.lsh.split('-')[0],qs,'jian')
-        qs.delete()
-        delFile(date,True)
-        transaction.commit()
-        return getResult(True)
+        return delOrderBBfun(request,idlist)
     except CompluteNumError,e:
         order=OrderList.objects.get(pk=e.order)
         if order:
@@ -591,13 +593,12 @@ def delOrderBB(request,idlist):
         wz=ProductSite.objects.get(pk=e.wz)
         result={'order':e.order,'wz':e.wz}
         msg='订单编号: %s 物料编号:%s 位置: %s ，剩余数量计算错误。'%(orderbh.encode('utf-8'),codestr.encode('utf-8'),wz.name.encode('utf-8'))
-        transaction.rollback()
+        #transaction.rollback()
         return getResult(result,False,msg)
-    except :
-        transaction.rollback()
+    except Exception,e:
+        #transaction.rollback()
         return getResult(False,False,'日报表保存错误，请检查数据。')
-    finally:
-        pass
+
 #        for k in computeOrder:
 #            del settings.DDGENZONG[k]
 
@@ -715,8 +716,10 @@ def getOrderGenZongByDate(request,datestart,is_open,ddbh=None,code=None,allsite=
     else:
         is_open=False
     if not ddbh and not code and allsite:
-        if hasFile(datestart,is_open):
-            return getPickleObj(datestart,is_open)
+        #if hasFile(datestart,is_open):
+        r= getPickleObj(datestart,is_open)
+        if r:
+            return r
 
 
     result=getOrderGenZongRow(request,datestart,(is_open and ['open'] or ['close'])[0],ddbh,code,allsite)
@@ -727,12 +730,12 @@ def getOrderGenZongByDate(request,datestart,is_open,ddbh=None,code=None,allsite=
 @transaction.commit_on_success
 def autoCompleteGenZong(request):
     datestr=datetime.datetime.now().strftime("%Y%m%d")
-    if not hasFile(datestr,True):
-        data=getOrderGenZongRow(request,datestr,'open')
-        savePickle(datestr,True,data)
-    if not hasFile(datestr,False):
-        data=getOrderGenZongRow(request,datestr,'close')
-        savePickle(datestr,False,data)
+    #if not hasFile(datestr,True):
+    data=getOrderGenZongRow(request,datestr,'open')
+    savePickle(datestr,True,data)
+    #if not hasFile(datestr,False):
+    data=getOrderGenZongRow(request,datestr,'close')
+    savePickle(datestr,False,data)
 
     url='http://'+request.META['HTTP_HOST']+'/static/swf/'
     return render_to_response('zt/index.html',{'url':url,'p':datetime.datetime.now()})
@@ -1305,48 +1308,52 @@ def getOrderBBExcel(request,date,headobj,nohead,rows):#日报表导出
     wb.save(MEDIA_ROOT+'/excel/'+filename)
     return getResult('http://'+request.META['HTTP_HOST']+'/static/excel/'+filename)
 
-def hasFile(date,is_open):
-    b1= os.path.isfile(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open))
-    b2= os.path.isfile(MEDIA_ROOT+'/excel/%s_%s.error'%(date,is_open))
-    if not b1:
-        return b1
-    if b1:
-        if b2:
-            return False
-        else:
-            return True
+#def hasFile(date,is_open):
+#
+#    b1= os.path.isfile(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open))
+#    b2= os.path.isfile(MEDIA_ROOT+'/excel/%s_%s.error'%(date,is_open))
+#    if not b1:
+#        return b1
+#    if b1:
+#        if b2:
+#            return False
+#        else:
+#            return True
 def delFile(date,is_open):
-    try:
-        if hasFile(date,is_open):
-            os.remove(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open))
-    except:
-        try:
-            f=open(MEDIA_ROOT+'/excel/%s_%s.error'%(date,is_open),'wb')
-            f.close()
-        except :
-            pass
+    cache.delete('%s_%s'%(date,is_open))
+    #try:
+    #    if hasFile(date,is_open):
+    #        os.remove(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open))
+    #except:
+    #    try:
+    #        f=open(MEDIA_ROOT+'/excel/%s_%s.error'%(date,is_open),'wb')
+    #        f.close()
+    #    except :
+    #        pass
 def savePickle(date,is_open,obj):
-    try:
-        if hasFile(date,is_open):
-            os.remove(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open))
-        with open(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open),'wb') as f:
-            pickle.dump(obj,f)
-        try:
-            os.remove(MEDIA_ROOT+'/excel/%s_%s.error'%(date,is_open))
-        except :
-            pass
-    except:
-        try:
-            f=open(MEDIA_ROOT+'/excel/%s_%s.error'%(date,is_open),'wb')
-            f.close()
-        except :
-            pass
+    cache.set('%s_%s'%(date,is_open),obj,3600*24*5)
+    #try:
+    #    if hasFile(date,is_open):
+    #        os.remove(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open))
+    #    with open(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open),'wb') as f:
+    #        pickle.dump(obj,f)
+    #    try:
+    #        os.remove(MEDIA_ROOT+'/excel/%s_%s.error'%(date,is_open))
+    #    except :
+    #        pass
+    #except:
+    #    try:
+    #        f=open(MEDIA_ROOT+'/excel/%s_%s.error'%(date,is_open),'wb')
+    #        f.close()
+    #    except :
+    #        pass
 def getPickleObj(date,is_open):
-    obj=None
-    if not hasFile(date,is_open):
-        return obj
-    with open(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open),'rb') as f:
-        obj=pickle.load(f)
+    #obj=None
+    obj = cache.get('%s_%s'%(date,is_open))
+    #if not hasFile(date,is_open):
+    #    return obj
+    #with open(MEDIA_ROOT+'/excel/%s_%s.cache'%(date,is_open),'rb') as f:
+    #    obj=pickle.load(f)
     return obj
 
 def cacheScx():

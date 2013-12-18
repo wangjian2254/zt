@@ -87,12 +87,14 @@ def getOrderEndDate(request,ddbhid):
 
 @login_required
 @permission_required('ztmanage.orderruning')
-def getOrderRuningList(request,start,end,isclose):
-    orderlistquery = OrderList.objects.filter(createDate__gte=datetime.datetime.strptime(start,'%Y%m%d')).filter(createDate__lte=datetime.datetime.strptime(end,'%Y%m%d')+datetime.timedelta(hours =24))
-    #if isclose=='open':
-    #    orderlistquery = orderlistquery.filter(is_open=True)
-    #else:
-    #    orderlistquery = orderlistquery.filter(is_open=False)
+def getOrderRuningList(request,start,end,isclose,ddbh=None):
+    orderlistquery = OrderList.objects.all()
+    if start and end:
+        orderlistquery=orderlistquery.filter(createDate__gte=datetime.datetime.strptime(start,'%Y%m%d')).filter(createDate__lte=datetime.datetime.strptime(end,'%Y%m%d')+datetime.timedelta(hours =24))
+    if isinstance(ddbh,int):
+        orderlistquery=orderlistquery.filter(ddbh=ddbh)
+    if isinstance(ddbh,str) or isinstance(ddbh,unicode):
+        orderlistquery = orderlistquery.filter(ddbh__in=OrderNo.objects.filter(ddbh__startswith=ddbh))
     orderbhids = set()
     for ol in orderlistquery:
         orderbhids.add(ol.ddbh_id)

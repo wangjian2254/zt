@@ -192,8 +192,9 @@ class RequestProcessor(object):
 
 
             msg=self.buildErrorResponse(ro_request)
-            errorLog(msg)
+            errorLog(msg, getattr(amf_request.body[0],"operation",""))
             traceback.print_exc()
+
 
             return remoting.Response(msg,
                                      status=remoting.STATUS_ERROR)
