@@ -5,7 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, Http404
 import json
 from django.views.decorators.csrf import  csrf_exempt
-
+from zt import xlwt
+from zt.xlwt import Font, Alignment
 __author__ = u'王健'
 
 
@@ -23,8 +24,7 @@ def getExcelByData(request):
     sheetname = data.get('sheetname','')
     filename = u'%s.xls'%excelname
     response['Content-Disposition'] = (u'attachment;filename=%s' % filename).encode('utf-8')
-    import xlwt
-    from xlwt import Font, Alignment
+
 
     style1=xlwt.XFStyle()
     font1=Font()
