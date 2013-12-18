@@ -94,7 +94,7 @@ def getOrderRuningList(request,start,end,isclose,ddbh=None):
     if isinstance(ddbh,int):
         orderlistquery=orderlistquery.filter(ddbh=ddbh)
     if isinstance(ddbh,str) or isinstance(ddbh,unicode):
-        orderlistquery = orderlistquery.filter(ddbh__in=OrderNo.objects.filter(ddbh__startswith=ddbh))
+        orderlistquery = orderlistquery.filter(ddbh__in=OrderNo.objects.filter(ddbh__istartswith=ddbh))
     orderbhids = set()
     for ol in orderlistquery:
         orderbhids.add(ol.ddbh_id)
