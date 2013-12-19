@@ -87,7 +87,7 @@ def getOrderEndDate(request,ddbhid):
 
 @login_required
 @permission_required('ztmanage.orderruning')
-def getOrderRuningList(request,start,end,isclose,ddbh=None):
+def getOrderRuningList(request,start,end,ddbh=None):
     orderlistquery = OrderList.objects.all()
     if start and end:
         orderlistquery=orderlistquery.filter(createDate__gte=datetime.datetime.strptime(start,'%Y%m%d')).filter(createDate__lte=datetime.datetime.strptime(end,'%Y%m%d')+datetime.timedelta(hours =24))
@@ -109,18 +109,18 @@ def getOrderRuningList(request,start,end,isclose,ddbh=None):
             orderdict[str(ol.ddbh_id)]['openorderlistnum']+=1
         else:
             orderdict[str(ol.ddbh_id)]['closeorderlistnum']+=1
-    delkeys =[]
+    #delkeys =[]
     for v in orderdict.values():
-        if isclose == 'open':
-            if v['openorderlistnum'] ==0:
-                delkeys.append(str(v['id']))
-        elif isclose == 'close':
-            if v['openorderlistnum']!=0:
-                delkeys.append(str(v['id']))
+        #if isclose == 'open':
+        #    if v['openorderlistnum'] ==0:
+        #        delkeys.append(str(v['id']))
+        #elif isclose == 'close':
+        #    if v['openorderlistnum']!=0:
+        #        delkeys.append(str(v['id']))
         if v['openorderlistnum']==0:
             v['closeflag']=1
-    for k in delkeys:
-        del orderdict[k]
+    #for k in delkeys:
+    #    del orderdict[k]
     l = list(orderbhids)
     l.sort()
     resultlist =[]
