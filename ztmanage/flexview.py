@@ -412,11 +412,9 @@ def setOrderListClose(request,orderlistid):
             savePickle(date,True,opendata)
             if closedata:
                 savePickle(date,False,closedata)
-        #transaction.commit()
         cache.delete('getOrderIsOpen')
         return getResult(closeorderlistid)
     except :
-        #transaction.rollback()
         return getResult(False,False,'关闭订单失败。')
 
 @login_required
@@ -556,32 +554,28 @@ def newOrderBBNoByUser(user):
     else:
         return date+'-'+('000'+str(user.pk))[-3:]+'-'+'0000'[-4:]
 
-@transaction.commit_on_success
-def delOrderBBfun(request,idlist):
-    date=datetime.datetime.now().strftime("%Y%m%d")
-    l=[]
-    for obj in idlist:
-        l.append(obj['id'])
-    if len(l)>0:
-        lsh=OrderBB.objects.get(pk=l[0])
-
-        if lsh.lsh.lsh.find(date)!=0:
-            #transaction.rollback()
-            return getResult(False,False,'只能修改当天的报表。')
-    else:
-        return getResult(True)
-    qs=OrderBB.objects.filter(pk__in=l)
-    computeOrderMonitorByLsh(lsh.lsh.lsh.split('-')[0],qs,'jian')
-    qs.delete()
-    delFile(date,True)
-    #transaction.commit()
-    return getResult(l)
 @login_required
 @permission_required('ztmanage.user_add')
 @orderbbdel_required('ztmanage.user_update')
 def delOrderBB(request,idlist):
     try:
-        return delOrderBBfun(request,idlist)
+        with transaction.commit_on_success():
+            date=datetime.datetime.now().strftime("%Y%m%d")
+            l=[]
+            for obj in idlist:
+                l.append(obj['id'])
+            if len(l)>0:
+                lsh=OrderBB.objects.get(pk=l[0])
+
+                if lsh.lsh.lsh.find(date)!=0:
+                    return getResult(False,False,'只能修改当天的报表。')
+            else:
+                return getResult(True)
+            qs=OrderBB.objects.filter(pk__in=l)
+            computeOrderMonitorByLsh(lsh.lsh.lsh.split('-')[0],qs,'jian')
+            qs.delete()
+            delFile(date,True)
+            return getResult(l)
     except CompluteNumError,e:
         order=OrderList.objects.get(pk=e.order)
         if order:
@@ -593,10 +587,8 @@ def delOrderBB(request,idlist):
         wz=ProductSite.objects.get(pk=e.wz)
         result={'order':e.order,'wz':e.wz}
         msg='订单编号: %s 物料编号:%s 位置: %s ，剩余数量计算错误。'%(orderbh.encode('utf-8'),codestr.encode('utf-8'),wz.name.encode('utf-8'))
-        #transaction.rollback()
         return getResult(result,False,msg)
     except Exception,e:
-        #transaction.rollback()
         return getResult(False,False,'日报表保存错误，请检查数据。')
 
 #        for k in computeOrder:
@@ -605,50 +597,50 @@ def delOrderBB(request,idlist):
     pass
 @login_required
 @permission_required('ztmanage.user_add')
-@orderbbchange_required('ztmanage.user_update')
-@transaction.commit_manually
+@orderbbchange_required('ztmanage.user_update')#@transaction.commit_manually
 def saveOrderBB(request,orderbblist,lsh=None):
     try:
-        date=datetime.datetime.now().strftime("%Y%m%d")
-        if not lsh:
-            lsh=OrderBBNo()
-            lsh.lsh=newOrderBBNoByUser(request.user)
-            lsh.user=request.user
-            lsh.save()
-        else:
-            lsh=OrderBBNo.objects.get(lsh=lsh)
+        with transaction.commit_on_success():
+            sdf = cache.get("sss")
+            cache.set("sss",333,6000)
+            sdf = cache.get("sss")
+            date=datetime.datetime.now().strftime("%Y%m%d")
+            if not lsh:
+                lsh=OrderBBNo()
+                lsh.lsh=newOrderBBNoByUser(request.user)
+                lsh.user=request.user
+                lsh.save()
+            else:
+                lsh=OrderBBNo.objects.get(lsh=lsh)
 
-            if lsh.lsh.find(date)!=0:
-                transaction.rollback()
-                return getResult(False,False,'只能修改当天的报表。')
-            computeOrderMonitorByLsh(lsh.lsh.split('-')[0],OrderBB.objects.filter(lsh=lsh),'jian')
-        orderBBList=[]
-        for obj in orderbblist:
-            o=OrderBB()
-            if obj.has_key('id'):
-                o.pk=obj['id']
-            o.lsh=lsh
-            o.yorder=OrderList.objects.get(pk=obj['yorder'])
-            o.yzydh=obj['yzydh'].strip()
-            if obj.has_key('ywz'):
-                o.ywz=ProductSite.objects.get(pk=obj['ywz'])
-                o.ywznum=obj['ywznum']
-            o.zrorder=OrderList.objects.get(pk=obj['zrorder'])
-            if obj.has_key('zrwz'):
-                o.zrwz=ProductSite.objects.get(pk=obj['zrwz'])
-                o.zrwznum=obj['zrwznum']
-            o.bfnum=obj['bfnum']
-            o.ysnum=obj['ysnum']
-            o.ywzsynum=obj['ywzsynum']
-            o.bztext=obj['bztext']
-            o.save()
-            orderBBList.append(o)
-        computeOrderMonitorByLsh(lsh.lsh.split('-')[0],orderBBList)
-        delFile(date,True)
-        transaction.commit()
-        return getResult(lsh.lsh)
+                if lsh.lsh.find(date)!=0:
+                    return getResult(False,False,'只能修改当天的报表。')
+                computeOrderMonitorByLsh(lsh.lsh.split('-')[0],OrderBB.objects.filter(lsh=lsh),'jian')
+            orderBBList=[]
+            for obj in orderbblist:
+                o=OrderBB()
+                if obj.has_key('id'):
+                    o.pk=obj['id']
+                o.lsh=lsh
+                o.yorder=OrderList.objects.get(pk=obj['yorder'])
+                o.yzydh=obj['yzydh'].strip()
+                if obj.has_key('ywz'):
+                    o.ywz=ProductSite.objects.get(pk=obj['ywz'])
+                    o.ywznum=obj['ywznum']
+                o.zrorder=OrderList.objects.get(pk=obj['zrorder'])
+                if obj.has_key('zrwz'):
+                    o.zrwz=ProductSite.objects.get(pk=obj['zrwz'])
+                    o.zrwznum=obj['zrwznum']
+                o.bfnum=obj['bfnum']
+                o.ysnum=obj['ysnum']
+                o.ywzsynum=obj['ywzsynum']
+                o.bztext=obj['bztext']
+                o.save()
+                orderBBList.append(o)
+            computeOrderMonitorByLsh(lsh.lsh.split('-')[0],orderBBList)
+            delFile(date,True)
+            return getResult(lsh.lsh)
     except CompluteNumError,e:
-#        transaction.rollback()
         order=OrderList.objects.get(pk=e.order)
         if order:
             orderbh=order.ddbh.ddbh
@@ -659,11 +651,8 @@ def saveOrderBB(request,orderbblist,lsh=None):
         wz=ProductSite.objects.get(pk=e.wz)
         result={'order':e.order,'wz':e.wz}
         msg='订单编号: %s 物料编号:%s 位置: %s ，剩余数量计算错误。'%(orderbh.encode('utf-8'),codestr.encode('utf-8'),wz.name.encode('utf-8'))
-
-        transaction.rollback()
         return getResult(result,False,msg)
     except Exception,e:
-        transaction.rollback()
         return getResult(False,False,'日报表保存错误，请检查数据。')
     finally:
         pass
@@ -951,6 +940,7 @@ def computeOrderMonitorByLsh(date,orderBBList,flag='add'):
                     OrderGenZong.objects.filter(pk=yorderGenZong.id).update(zcnum=yorderGenZong.zcnum,bfnum=yorderGenZong.bfnum,ysnum=yorderGenZong.ysnum)
         if orderBB.zrwz_id:
             zrorderGenZong=getOrderGenZong(orderBB.zrorder,orderBB.zrwz,date)
+            #raise CompluteNumError(zrorderGenZong.order_id,zrorderGenZong.wz_id)
             if flag=='add':
                 zrorderGenZong.ywznum+=orderBB.zrwznum
             else:
