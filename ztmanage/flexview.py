@@ -2,7 +2,6 @@
 #Date: 11-12-8
 #Time: 下午10:28
 import datetime
-import os
 import uuid
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Permission
@@ -16,7 +15,6 @@ from zt.ztmanage.models import Ztperm
 from django.core.cache import cache
 from zt import xlwt
 from zt.xlwt.Formatting import Font, Alignment
-import pickle
 from zt.ztmanage.tools import getResult
 
 __author__ = u'王健'
@@ -601,9 +599,6 @@ def delOrderBB(request,idlist):
 def saveOrderBB(request,orderbblist,lsh=None):
     try:
         with transaction.commit_on_success():
-            sdf = cache.get("sss")
-            cache.set("sss",333,6000)
-            sdf = cache.get("sss")
             date=datetime.datetime.now().strftime("%Y%m%d")
             if not lsh:
                 lsh=OrderBBNo()
