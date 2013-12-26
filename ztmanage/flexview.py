@@ -78,7 +78,7 @@ def getAllUser(request):
     pass
 @login_required
 def userhaschange(request):
-    if request.user.has_perm('ztmanage.order_zhuizong'):
+    if not request.user.is_superuser and request.user.has_perm('ztmanage.order_zhuizong'):
         return getResult(True)
     else:
         return getResult(False)

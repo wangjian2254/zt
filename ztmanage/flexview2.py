@@ -20,7 +20,7 @@ __author__ = u'王健'
 @login_required
 @permission_required('ztmanage.plan_update')
 @transaction.commit_on_success
-def updatePlan(request,obj):
+def updatePlan(request,sitelist,planlist):
     '''
     编制保存主计划，没有经过审核的主计划可以任意修改。
     审核状态的主计划，不可以修改，
