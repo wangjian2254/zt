@@ -2,10 +2,10 @@
 #Date: 11-12-8
 #Time: 下午10:28
 import datetime
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite
-from zt.ztmanage.tools import getResult,  newPlanLSHNoByUser
+from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm
+from zt.ztmanage.tools import getResult,  newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById
 
 __author__ = u'王健'
 '''
@@ -20,9 +20,53 @@ __author__ = u'王健'
 def str2date(strdate):
     return datetime.datetime.strptime(strdate, '%Y/%m/%d')
 
+def str2date2(strdate):
+    return datetime.datetime.strptime(strdate, '%Y%m%d')
+
+
+
+def permission_required(code):
+    def permission(func):
+        def test(request, *args, **kwargs):
+            if request.user.has_perm(code):
+                return func(request, *args, **kwargs)
+            else:
+                return getResult(False,False,u'权限不够,需要具有：%s 权限'%Ztperm.perm[code])
+        return test
+    return permission
+
+def plandel_required(code):
+    def permission(func):
+        def test(request, *args, **kwargs):
+            if request.user.has_perm(code):
+                return func(request, *args, **kwargs)
+            else:
+                idlist=args[0]
+                if len(idlist)>0:
+                    if request.user.pk==OrderBB.objects.get(pk=idlist[0]['id']).lsh.user.pk:
+                        return func(request, *args, **kwargs)
+                return getResult(False,False,u'权限不够,需要具有：%s 权限'%Ztperm.perm[code])
+        return test
+    return permission
+
+def planchange_required(code):
+    def permission(func):
+        def test(request, *args, **kwargs):
+            if request.user.has_perm(code):
+                return func(request, *args, **kwargs)
+            else:
+                lsh=kwargs.get('lsh','')
+                if not lsh:
+                    return func(request, *args, **kwargs)
+                if lsh and  request.user.pk==PlanNo.objects.get(lsh=lsh).bianzhi.pk:
+                    return func(request, *args, **kwargs)
+                return getResult(False,False,u'权限不够,需要具有：%s 权限,并且只能修改自己编织的计划'%Ztperm.perm[code])
+        return test
+    return permission
+
 
 @login_required
-@permission_required('ztmanage.plan_update')
+@planchange_required('ztmanage.plan_update')
 @transaction.commit_on_success
 def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
     '''
@@ -50,7 +94,7 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
         planrecord.orderlist = OrderList.objects.get(pk=getattr(planrecordobj,'yddbh'))
         planrecord.zydh = getattr(planrecordobj,'zydh')
         planrecord.plannum = int(getattr(planrecordobj,'plannum',0))
-        planrecord.level = int(getattr(planrecordobj,'level',1))
+        planrecord.level = int(getattr(planrecordobj,'level',0))
         planrecord.planbz = getattr(planrecordobj,'planbz','')
         planrecord.ordergongyi = getattr(planrecordobj,'ordergongyi','')
         planrecord.save()
@@ -77,7 +121,37 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
             plandetail.startsite = psite
             plandetail.endsite = ProductSite.objects.get(pk=getattr(planrecordobj,'zrwz%s'%psite.id))
             plandetail.save()
-    return getResult(planno,True,u'计划制定成功')
+    return getResult(planno,True,u'计划制定成功,流水号：%s'%planno.lsh)
+
+
+
+@login_required
+def getPlanDetailByIdOrLsh(request,obj):
+    lsh =None
+    id = None
+    try:
+        id = int(obj)
+    except:
+        lsh = obj
+    if id:
+        planno = PlanNo.objects.filter(pk=id)[:1]
+    if lsh:
+        planno = PlanNo.objects.filter(lsh=lsh)[:1]
+    if len(planno):
+        planno = planno[0]
+    else:
+        return getResult(False,False,u'主计划不存在')
+
+    resultlist=[]
+    for record in PlanRecord.objects.filter(planno=planno):
+        orderlist = getOrderByOrderlistid(record.orderlist_id)
+        code=getCodeNameById(orderlist.get('code'))
+        planrecord = {"id":record.pk,'yddbh':record.orderlist_id,'codestr':code.get('code'),'codename':code.get('name'),'codegg':code.get('gg'),'scx':code.get('scx')}
+        planrecord['zydh'] = record.zydh
+        planrecord['plannum'] = record.plannum
+        planrecord['planbz'] = record.planbz
+        planrecord['ordergongyi'] = record.ordergongyi
+        planrecord['level'] = record.level
 
 
 
@@ -113,11 +187,37 @@ def uncheckPlan(request,obj):
 def allPlan(request,obj):
     pass
 
+
+
+def queryPlanBy(request,planuser,startdate,enddate,status):
+    '''
+    status 0:全部 1:未通过 2:通过
+    '''
+    query =PlanNo.objects.all()
+    if planuser:
+        query = query.filter(bianzhi=planuser)
+    if startdate:
+        query = query.filter(updateTime__gte=str2date2(startdate))
+    if enddate:
+        query = query.filter(updateTime__lte=str2date2(enddate))
+
+    if status == 1:
+        query = query.filter(status__in=('1','3'))
+    elif status == 2:
+        query = query.filter(status='2')
+
+    return getResult(query)
+
+
+
+@login_required
+def queryPlanByUser(request):
+    return queryPlanBy(request,request.user,None,None,1)
+
 @login_required
 @permission_required('ztmanage.plan_query')
-@transaction.commit_on_success
 def queryPlan(request,planuser,startdate,enddate,status):
-    pass
+    return queryPlanBy(request,planuser,startdate,enddate,status)
 
 @login_required
 @permission_required('ztmanage.plan_changerecord')

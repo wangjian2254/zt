@@ -2,7 +2,8 @@
 #Date: 11-12-8
 #Time: 下午10:28
 import datetime
-from ztmanage.models import OrderBBNo, PlanNo
+from django.core.cache import cache
+from ztmanage.models import OrderBBNo, PlanNo, Scx, Code, OrderNo, OrderList
 
 __author__ = u'王健'
 
@@ -43,3 +44,73 @@ def newPlanLSHNoByUser(user):
         return lsh
     else:
         return date+'-'+('000'+str(user.pk))[-3:]+'-'+'0000'[-4:]
+
+
+def delFile(date,is_open):
+    cache.delete('%s_%s'%(date,is_open))
+
+def savePickle(date,is_open,obj):
+    cache.set('%s_%s'%(date,is_open),obj,3600*24*5)
+
+def getPickleObj(date,is_open):
+    obj = cache.get('%s_%s'%(date,is_open))
+    return obj
+
+def cacheScx():
+    scxmap={}
+    for scx in Scx.objects.all():
+        scxvalue={'id':scx.pk,'name':scx.name}
+        scxmap['scx'+str(scx.pk)]=scxvalue
+    return scxmap
+
+def getScxById(id):
+    scx=cache.get('scx'+str(id))
+    if scx:
+        return scx
+    scx=Scx.objects.get(pk=id)
+    scx={'id':scx.pk,'name':scx.name}
+    cache.set('scx'+str(id),scx,60*60*2)
+    return scx
+
+def getCodeByList(l):
+    scxmap=cacheScx()
+    codemap={}
+    for code in Code.objects.filter(pk__in=l):
+        codevalue={'id':code.pk,'code':code.code,'name':code.name,'gg':code.gg,'dj':code.dj,'scx':scxmap['scx'+str(code.scx_id)]['name']}
+        codemap['code'+str(code.pk)]=codevalue
+    return codemap
+
+def getOrderNoByList(l):
+    ordernomap={}
+    for o in OrderNo.objects.filter(pk__in=l):
+        ovalue={'id':o.pk,'ddbh':o.ddbh}
+        ordernomap['orderno'+str(o.pk)]=ovalue
+    return ordernomap
+
+def getCodeNameById(codeid):
+    code=cache.get('code'+str(codeid))
+    if code:
+        return code
+    code=Code.objects.get(pk=codeid)
+    code={'id':code.pk,'code':code.code,'name':code.name,'gg':code.gg,'dj':code.dj,'scx':getScxById(code.scx_id)['name']}
+    cache.set('code'+str(codeid),code,60*60*2)
+    return code
+
+def getOrderByOrderlistid(orderid):
+    orderlist=cache.get('orderlist'+str(orderid))
+    if orderlist:
+        return orderlist
+    o=OrderList.objects.get(pk=orderid)
+    orderlist={'id':o.pk,'dj':o.dj,'cz':o.cz,'ddbh':o.ddbh.ddbh,'closedate':o.closeDate,'ordernum':o.num,'code':o.code_id}
+    cache.set('orderlist'+str(orderid),orderlist,60*60*2)
+    return orderlist
+
+def getOrderNoByOrderList(orderid):
+    orderlist=cache.get('orderno'+str(orderid))
+    if orderlist:
+        return orderlist
+    o=OrderNo.objects.get(pk=orderid)
+    orderlist={'id':o.pk,'ddbh':o.ddbh}
+    cache.set('orderno'+str(orderid),orderlist,60*60*2)
+    return orderlist
+
