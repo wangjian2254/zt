@@ -216,10 +216,10 @@ class PlanNo(models.Model):
 
     lsh = models.CharField(max_length=20,unique=True,verbose_name=u'主计划流水号',help_text=u'主计划流水号')
     updateTime = models.DateField(auto_now=True,db_index=True,verbose_name=u'编制日期',help_text=u'每修改一次，改变一次')
-    firstcheckTime = models.DateField(auto_now=True,db_index=True,verbose_name=u'第一次审核日期',help_text=u'第一次审核')
-    lastcheckTime = models.DateField(auto_now=True,db_index=True,verbose_name=u'最后一次审核日期',help_text=u'最后一次审核')
+    firstcheckTime = models.DateField(auto_now=True,blank=True,null=True,db_index=True,verbose_name=u'第一次审核日期',help_text=u'第一次审核')
+    lastcheckTime = models.DateField(auto_now=True,blank=True,null=True,db_index=True,verbose_name=u'最后一次审核日期',help_text=u'最后一次审核')
     bianzhi = models.ForeignKey(User,related_name='bianzhi',db_index=True,verbose_name=u'编制人',help_text=u'编制计划的用户')
-    shenhe = models.ForeignKey(User,related_name='shenhe',db_index=True,verbose_name=u'审核人',help_text=u'审核计划的用户')
+    shenhe = models.ForeignKey(User,related_name='shenhe',blank=True,null=True,db_index=True,verbose_name=u'审核人',help_text=u'审核计划的用户')
     status = models.CharField(choices=TYPE,max_length=5,db_index=True,verbose_name=u'状态',help_text=u'主计划的状态')
     isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
 
@@ -241,6 +241,7 @@ class PlanRecord(models.Model):
     planbz = models.TextField(verbose_name=u'订单要求说明')
     ordergongyi = models.TextField(verbose_name=u'订单要求工艺')
     level = models.IntegerField(choices=TYPE,verbose_name=u'紧急程度',help_text=u'计划的紧急程度')
+    isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
 
 class PlanDetail(models.Model):
     planrecord = models.ForeignKey(PlanRecord,verbose_name=u'主计划',help_text=u'主计划的条目')
@@ -248,7 +249,7 @@ class PlanDetail(models.Model):
     enddate=models.DateField(auto_now=True,db_index=True,blank=True,null=True,verbose_name=u'计划完成日期',help_text=u'物料计划完成生产的日期,为空则是永久停留')
     startsite = models.ForeignKey(ProductSite,db_index=True,related_name='startsite',verbose_name=u'起始作业区',help_text=u'生产的作业区')
     endsite = models.ForeignKey(ProductSite,db_index=True,related_name='endsite',verbose_name=u'去向作业区',help_text=u'去向位置')
-
+    isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
     oldData = models.TextField(blank=True,null=True,verbose_name=u'退审时修改前的数据',help_text=u'用来在审核时，和修改的数据做比较，将其他数据用json方式保存')
 
 

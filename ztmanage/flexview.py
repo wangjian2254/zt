@@ -15,7 +15,7 @@ from zt.ztmanage.models import Ztperm
 from django.core.cache import cache
 from zt import xlwt
 from zt.xlwt.Formatting import Font, Alignment
-from zt.ztmanage.tools import getResult
+from zt.ztmanage.tools import getResult, newLSHNoByUser
 
 __author__ = u'王健'
 
@@ -534,23 +534,10 @@ def getOrderBBNoByDateQJ(request,date,dateend=None,code=None,user=None):
     pass
 @login_required
 def getNewOrderBBNoByUser(request):
-    return getResult(newOrderBBNoByUser(request.user))
+    return getResult(newLSHNoByUser(request.user))
 
     pass
-def newOrderBBNoByUser(user):
-    date=datetime.datetime.now().strftime("%Y%m%d")
 
-#    lastNo=OrderBBNo.objects.filter(lsh__startswith=date,user=user).delete()
-#    lastNo=[]
-    lastNo=OrderBBNo.objects.filter(lsh__startswith=date,user=user).order_by('-lsh')[:1]
-    if len(lastNo)>0:
-        lsh=lastNo[0].lsh.split('-')[2]
-        lsh=int(lsh)
-        lsh+=1
-        lsh=lastNo[0].lsh.split('-')[0]+'-'+lastNo[0].lsh.split('-')[1]+'-'+('0000'+str(lsh))[-4:]
-        return lsh
-    else:
-        return date+'-'+('000'+str(user.pk))[-3:]+'-'+'0000'[-4:]
 
 @login_required
 @permission_required('ztmanage.user_add')
@@ -602,7 +589,7 @@ def saveOrderBB(request,orderbblist,lsh=None):
             date=datetime.datetime.now().strftime("%Y%m%d")
             if not lsh:
                 lsh=OrderBBNo()
-                lsh.lsh=newOrderBBNoByUser(request.user)
+                lsh.lsh=newLSHNoByUser(request.user)
                 lsh.user=request.user
                 lsh.save()
             else:

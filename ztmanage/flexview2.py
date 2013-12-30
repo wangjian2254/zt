@@ -4,8 +4,8 @@
 import datetime
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db import transaction
-from zt.ztmanage.models import OrderList, OrderNo, OrderBB
-from zt.ztmanage.tools import getResult
+from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite
+from zt.ztmanage.tools import getResult,  newPlanLSHNoByUser
 
 __author__ = u'王健'
 '''
@@ -17,15 +17,74 @@ __author__ = u'王健'
 ('plan_changerecord',u'主计划修改记录'),
 '''
 
+def str2date(strdate):
+    return datetime.datetime.strptime(strdate, '%Y/%m/%d')
+
+
 @login_required
 @permission_required('ztmanage.plan_update')
 @transaction.commit_on_success
-def updatePlan(request,sitelist,planlist):
+def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
     '''
     编制保存主计划，没有经过审核的主计划可以任意修改。
     审核状态的主计划，不可以修改，
     '''
-    pass
+    if lsh:
+        planno=PlanNo.objects.get(lsh=lsh)
+        for delsite in unsitelist:
+            PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno).filter(isdel=False)).filter(startsite=getattr(delsite,'id')).filter(isdel=False).update(isdel=True)
+    else:
+        planno=PlanNo()
+        planno.lsh=newPlanLSHNoByUser(request.user)
+        planno.status='1'
+    planno.updateTime=datetime.datetime.now()
+    planno.bianzhi=request.user
+    planno.save()
+
+    for planrecordobj in planrecordlist:
+        if hasattr(planrecordobj,'id'):
+            planrecord = PlanRecord.objects.get(pk=getattr(planrecordobj,'id'))
+        else:
+            planrecord = PlanRecord()
+            planrecord.planno=planno
+        planrecord.orderlist = OrderList.objects.get(pk=getattr(planrecordobj,'yddbh'))
+        planrecord.zydh = getattr(planrecordobj,'zydh')
+        planrecord.plannum = int(getattr(planrecordobj,'plannum',0))
+        planrecord.level = int(getattr(planrecordobj,'level',1))
+        planrecord.planbz = getattr(planrecordobj,'planbz','')
+        planrecord.ordergongyi = getattr(planrecordobj,'ordergongyi','')
+        planrecord.save()
+        for site in sitelist:
+            psite=ProductSite.objects.get(pk=getattr(site,'id'))
+            plandetail = PlanDetail.objects.filter(planrecord=planrecord).filter(startsite=psite)[:1]
+            if len(plandetail):
+                plandetail = plandetail[0]
+            else:
+                plandetail = PlanDetail()
+                plandetail.planrecord = planrecord
+                plandetail.startsite = psite
+            plandetail.isdel = False
+            if not hasattr(planrecordobj,'startdate%s'%psite.id) or not hasattr(planrecordobj,'zrwz%s'%psite.id):
+                plandetail.isdel=True
+                if plandetail.pk:
+                    plandetail.save()
+                continue
+            plandetail.startdate = str2date(getattr(planrecordobj,'startdate%s'%psite.id))
+            if not hasattr(planrecordobj,'enddate%s'%psite.id) or getattr(planrecordobj,'enddate%s'%psite.id)==u'永久'or getattr(planrecordobj,'enddate%s'%psite.id)=='永久':
+                plandetail.enddate=None
+            else:
+                plandetail.enddate=str2date(getattr(planrecordobj,'enddate%s'%psite.id))
+            plandetail.startsite = psite
+            plandetail.endsite = ProductSite.objects.get(pk=getattr(planrecordobj,'zrwz%s'%psite.id))
+            plandetail.save()
+    return getResult(planno,True,u'计划制定成功')
+
+
+
+
+
+
+
 
 
 @login_required
@@ -57,7 +116,7 @@ def allPlan(request,obj):
 @login_required
 @permission_required('ztmanage.plan_query')
 @transaction.commit_on_success
-def queryPlan(request,obj):
+def queryPlan(request,planuser,startdate,enddate,status):
     pass
 
 @login_required
