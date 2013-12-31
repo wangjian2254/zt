@@ -1,7 +1,7 @@
 #coding=utf-8
 #Date: 11-12-8
 #Time: 下午10:28
-import datetime
+import datetime,json
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm
@@ -114,7 +114,7 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
                     plandetail.save()
                 continue
             plandetail.startdate = str2date(getattr(planrecordobj,'startdate%s'%psite.id))
-            if not hasattr(planrecordobj,'enddate%s'%psite.id) or getattr(planrecordobj,'enddate%s'%psite.id)==u'永久'or getattr(planrecordobj,'enddate%s'%psite.id)=='永久':
+            if not hasattr(planrecordobj,'enddate%s'%psite.id) or getattr(planrecordobj,'enddate%s'%psite.id,None)==u'永久':
                 plandetail.enddate=None
             else:
                 plandetail.enddate=str2date(getattr(planrecordobj,'enddate%s'%psite.id))
@@ -146,39 +146,62 @@ def getPlanDetailByIdOrLsh(request,obj):
     for record in PlanRecord.objects.filter(planno=planno):
         orderlist = getOrderByOrderlistid(record.orderlist_id)
         code=getCodeNameById(orderlist.get('code'))
-        planrecord = {"id":record.pk,'yddbh':record.orderlist_id,'codestr':code.get('code'),'codename':code.get('name'),'codegg':code.get('gg'),'scx':code.get('scx')}
+        planrecord = {"id":record.pk,'yddbh':record.orderlist_id,'code':code.get('id'),'codestr':code.get('code'),'codename':code.get('name'),'codegg':code.get('gg'),'scx':code.get('scx')}
         planrecord['zydh'] = record.zydh
         planrecord['plannum'] = record.plannum
         planrecord['planbz'] = record.planbz
         planrecord['ordergongyi'] = record.ordergongyi
         planrecord['level'] = record.level
+        planrecord['isdel'] = record.isdel
+        if record.oldData:
+            planrecord['oldDataDict'] =  json.loads(record.oldData)
+        else:
+            planrecord['oldDataDict'] = {}
 
-
-
-
-
-
+        for plandetail in PlanDetail.objects.filter(planrecord=record):
+            planrecord['startdate%s'%plandetail.startsite_id] = plandetail.startdate.strftime('%Y/%m/%d')
+            if plandetail.enddate:
+                planrecord['enddate%s'%plandetail.startsite_id] = plandetail.enddate.strftime('%Y/%m/%d')
+            else:
+                planrecord['enddate%s'%plandetail.startsite_id] = u'永久'
+            planrecord['zrwz%s'%plandetail.startsite_id] = plandetail.endsite_id
+            if plandetail.oldData:
+                planrecord['oldDataDict'].update(json.loads(plandetail.oldData))
+            planrecord['isdel%s'%plandetail.startsite_id] = plandetail.isdel
+        if not planrecord['oldDataDict']:
+            del planrecord['oldDataDict']
+        resultlist.append(planrecord)
+    return getResult({"list":resultlist,'plan':planno})
 
 
 
 @login_required
-@permission_required('ztmanage.plan_update')
+@planchange_required('ztmanage.plan_update')
 @transaction.commit_on_success
-def updatePlanDelete(request,obj):
-    pass
+def updatePlanDelete(request,recordids):
+    planrecordquery = PlanRecord.objects.filter(pk__in=recordids)
+    planrecordquery.update(isdel=True)
+    PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=True)
+    return getResult(True,True,u'删除主计划记录成功')
 
 
 @login_required
 @permission_required('ztmanage.plan_check')
 @transaction.commit_on_success
-def checkPlan(request,obj):
-    pass
+def checkPlan(request,objid):
+    planno = PlanNo.objects.get(pk=objid)
+    planno.status = '2'
+    planno.save()
+    return getResult(True,True,u'审核 主计划成功，流水号为：%s'%planno.lsh)
 
 @login_required
 @permission_required('ztmanage.plan_uncheck')
 @transaction.commit_on_success
-def uncheckPlan(request,obj):
-    pass
+def uncheckPlan(request,objid):
+    planno = PlanNo.objects.get(pk=objid)
+    planno.status = '3'
+    planno.save()
+    return getResult(True,True,u'退审 主计划成功，流水号为：%s'%planno.lsh)
 
 
 @login_required

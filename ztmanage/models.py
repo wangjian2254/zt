@@ -242,6 +242,8 @@ class PlanRecord(models.Model):
     ordergongyi = models.TextField(verbose_name=u'订单要求工艺')
     level = models.IntegerField(choices=TYPE,verbose_name=u'紧急程度',help_text=u'计划的紧急程度')
     isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
+    oldData = models.TextField(blank=True,null=True,verbose_name=u'退审时修改前的数据',help_text=u'用来在审核时，和修改的数据做比较，将其他数据用json方式保存')
+
 
 class PlanDetail(models.Model):
     planrecord = models.ForeignKey(PlanRecord,verbose_name=u'主计划',help_text=u'主计划的条目')
