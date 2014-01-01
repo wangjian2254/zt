@@ -188,18 +188,56 @@ def updatePlanDelete(request,recordids):
 @login_required
 @permission_required('ztmanage.plan_check')
 @transaction.commit_on_success
-def checkPlan(request,objid):
-    planno = PlanNo.objects.get(pk=objid)
+def checkPlan(request,obj):
+    lsh =None
+    id = None
+    try:
+        id = int(obj)
+    except:
+        lsh = obj
+    if id:
+        planno = PlanNo.objects.filter(pk=id)[:1]
+    if lsh:
+        planno = PlanNo.objects.filter(lsh=lsh)[:1]
+    if len(planno):
+        planno = planno[0]
+    else:
+        return getResult(False,False,u'主计划不存在')
+    if planno.bianzhi_id != request.user.id:
+        return getResult(False,False,u'不能 审核 自己编制的主计划')
+    if planno.status == "2":
+        return getResult(False,False,u'已经审核过的主计划 不能 再次 审核')
+
     planno.status = '2'
+    planno.shenhe = request.user
     planno.save()
     return getResult(True,True,u'审核 主计划成功，流水号为：%s'%planno.lsh)
 
 @login_required
 @permission_required('ztmanage.plan_uncheck')
 @transaction.commit_on_success
-def uncheckPlan(request,objid):
-    planno = PlanNo.objects.get(pk=objid)
+def uncheckPlan(request,obj):
+    lsh =None
+    id = None
+    try:
+        id = int(obj)
+    except:
+        lsh = obj
+    if id:
+        planno = PlanNo.objects.filter(pk=id)[:1]
+    if lsh:
+        planno = PlanNo.objects.filter(lsh=lsh)[:1]
+    if len(planno):
+        planno = planno[0]
+    else:
+        return getResult(False,False,u'主计划不存在')
+
+    if planno.bianzhi_id != request.user.id:
+        return getResult(False,False,u'不能 退审 自己编制的主计划')
+    if planno.status != "2":
+        return getResult(False,False,u'未审核过的主计划 不能 退审')
     planno.status = '3'
+    planno.shenhe = request.user
     planno.save()
     return getResult(True,True,u'退审 主计划成功，流水号为：%s'%planno.lsh)
 
@@ -212,35 +250,49 @@ def allPlan(request,obj):
 
 
 
-def queryPlanBy(request,planuser,startdate,enddate,status):
+def queryPlanBy(request,planuser,checkuser,startdate,enddate,checkstartdate,checkenddate,status=None):
     '''
     status 0:全部 1:未通过 2:通过
     '''
     query =PlanNo.objects.all()
     if planuser:
         query = query.filter(bianzhi=planuser)
+    if checkuser:
+        query = query.filter(shenhe=checkuser)
     if startdate:
         query = query.filter(updateTime__gte=str2date2(startdate))
     if enddate:
         query = query.filter(updateTime__lte=str2date2(enddate))
+
+    if checkstartdate:
+        query = query.filter(lastcheckTime__gte=str2date2(checkstartdate))
+    if checkenddate:
+        query = query.filter(lastcheckTime__lte=str2date2(checkenddate))
 
     if status == 1:
         query = query.filter(status__in=('1','3'))
     elif status == 2:
         query = query.filter(status='2')
 
-    return getResult(query)
+    resultlist=[]
+    for plan in query:
+        r={'id':plan.pk,'lsh':plan.lsh,'shenhe':getattr(getattr(plan,"shenhe",{}),"last_name",""),'bianzhi':getattr(getattr(plan,"bianzhi",{}),"last_name",""),'updateTime':plan.updateTime.strftime('%Y/%m/%d'),'status':plan.status}
+        r['lastcheckTime']=''
+        if plan.lastcheckTime:
+            r['lastcheckTime']=plan.lastcheckTime.strftime('%Y/%m/%d')
+        resultlist.append(r)
+    return getResult(resultlist)
 
 
 
 @login_required
 def queryPlanByUser(request):
-    return queryPlanBy(request,request.user,None,None,1)
+    return queryPlanBy(request,request.user,None,None,None,None,None,1)
 
 @login_required
 @permission_required('ztmanage.plan_query')
-def queryPlan(request,planuser,startdate,enddate,status):
-    return queryPlanBy(request,planuser,startdate,enddate,status)
+def queryPlan(request,planuser,checkuser,startdate,enddate,checkstartdate,checkenddate):
+    return queryPlanBy(request,planuser,checkuser,startdate,enddate,checkstartdate,checkenddate)
 
 @login_required
 @permission_required('ztmanage.plan_changerecord')
