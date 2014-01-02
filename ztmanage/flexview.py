@@ -15,7 +15,7 @@ from zt.ztmanage.models import Ztperm
 from django.core.cache import cache
 from zt import xlwt
 from zt.xlwt.Formatting import Font, Alignment
-from zt.ztmanage.tools import getResult, newLSHNoByUser, delFile, getPickleObj, savePickle, getOrderByOrderlistid, getCodeNameById, getCodeByList, getOrderNoByList
+from zt.ztmanage.tools import getResult, newLSHNoByUser, delFile, getPickleObj, savePickle,  getCodeByList, getOrderNoByList,getOrderByOrderlistid,getCodeNameById
 
 __author__ = u'王健'
 
@@ -88,6 +88,7 @@ def userhaschange(request):
 @permission_required('ztmanage.user_manager')
 @transaction.commit_on_success
 def saveUser(request,obj):
+    # raise 'sdf'
     u=User()
     if obj.has_key('id'):
         u=User.objects.get(pk=obj['id'])
@@ -175,7 +176,7 @@ def getAllScx(request):
     for scx in Scx.objects.all().order_by('id'):
         scxlist.append(scx)
     result=scxlist
-    cache.set('allscx',result,60*60*2)
+    cache.set('allscx',result,3600*24*10)
     return getResult(result)
     pass
 
@@ -194,7 +195,7 @@ def getAllCode(request):
         codelist.append({'id':code.pk,'code':code.code,'name':code.name,'scx':code.scx_id,'gg':code.gg,'dj':code.dj})
 #        codelist.append(code)
     result=codelist
-    cache.set('allcode',result,60*60*2)
+    cache.set('allcode',result,3600*24*10)
     return getResult(result)
     pass
 @login_required
@@ -247,7 +248,7 @@ def getAllProductSite(request):
     for site in ProductSite.objects.all():
         sitelist.append(site)
     result=sitelist
-    cache.set('allsite',result,60*60*2)
+    cache.set('allsite',result,3600*24*10)
     return getResult(result)
 
 @login_required
@@ -315,7 +316,7 @@ def getAllOrderNo(request):
     for site in OrderNo.objects.all():
         sitelist.append(site)
     result=sitelist
-    cache.set('allorderno',result,60*60*2)
+    cache.set('allorderno',result,3600*24*10)
     return getResult(result)
 #    return getResult(OrderNo.objects.all())
     pass
@@ -354,7 +355,7 @@ def getOrderIsOpen(request):
 #        ordernolist.append(n)
         ordernolist.append({'id':n.pk,'ddbh':n.ddbh,'bzname':n.bzname})
     result={'orderlist':orderlist,'orderddbh':ordernolist}
-    cache.set('getOrderIsOpen',result,60*60*2)
+    cache.set('getOrderIsOpen',result,3600*24*10)
 #    ddbhmap={}
 #    for ddbh in OrderNo.objects.filter(pk__in=list(oset)):
 #        ddbhmap['ddbh'+str(ddbh.pk)]=ddbh.ddbh

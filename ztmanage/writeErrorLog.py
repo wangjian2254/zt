@@ -17,7 +17,7 @@ filehandler = logging.FileHandler(filename)
 logger.addHandler(filehandler)
 fmt = logging.Formatter('%(asctime)s, %(funcName)s, %(message)s')
 #logging.basicConfig(filename=MEDIA_ROOT+'/logging/%s.log'%(time.strftime(TIME_FORMATE, time.localtime())))
-def errorLog(msg,fun=''):
+def errorLog(msg,fun='',xingming='',data=''):
     try:
         global filename
         global filehandler
@@ -28,6 +28,7 @@ def errorLog(msg,fun=''):
             logger.addHandler(newfilehandler)
             filename=newfilename
         logger.error('%s :'%(time.strftime(TIME_FORMATE_LOG, time.localtime()))+str(msg)+'fun:%s'%fun)
+        logger.error('%s :'%(time.strftime(TIME_FORMATE_LOG, time.localtime()))+'name:%s:%s'%(xingming,str(data)))
     except Exception,e:
         print e
 

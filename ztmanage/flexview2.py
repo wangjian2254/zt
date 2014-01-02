@@ -5,7 +5,7 @@ import datetime,json
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm
-from zt.ztmanage.tools import getResult,  newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById
+from zt.ztmanage.tools import getResult,  newPlanLSHNoByUser ,getOrderByOrderlistid,getCodeNameById
 
 __author__ = u'王健'
 '''

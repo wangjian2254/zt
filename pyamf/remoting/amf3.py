@@ -192,7 +192,7 @@ class RequestProcessor(object):
 
 
             msg=self.buildErrorResponse(ro_request)
-            errorLog(msg, getattr(amf_request.body[0],"operation",""))
+            errorLog(msg, getattr(amf_request.body[0],"operation",""),kwargs['http_request'].user.last_name,kwargs['http_request'].POST)
             traceback.print_exc()
 
 

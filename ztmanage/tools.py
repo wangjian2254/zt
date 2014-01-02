@@ -50,7 +50,7 @@ def delFile(date,is_open):
     cache.delete('%s_%s'%(date,is_open))
 
 def savePickle(date,is_open,obj):
-    cache.set('%s_%s'%(date,is_open),obj,3600*24*5)
+    cache.set('%s_%s'%(date,is_open),obj,3600*24*2)
 
 def getPickleObj(date,is_open):
     obj = cache.get('%s_%s'%(date,is_open))
@@ -69,7 +69,7 @@ def getScxById(id):
         return scx
     scx=Scx.objects.get(pk=id)
     scx={'id':scx.pk,'name':scx.name}
-    cache.set('scx'+str(id),scx,60*60*2)
+    cache.set('scx'+str(id),scx,3600*24*20)
     return scx
 
 def getCodeByList(l):
@@ -93,16 +93,16 @@ def getCodeNameById(codeid):
         return code
     code=Code.objects.get(pk=codeid)
     code={'id':code.pk,'code':code.code,'name':code.name,'gg':code.gg,'dj':code.dj,'scx':getScxById(code.scx_id)['name']}
-    cache.set('code'+str(codeid),code,60*60*2)
+    cache.set('code'+str(codeid),code,3600*24*20)
     return code
 
 def getOrderByOrderlistid(orderid):
-    orderlist=cache.get('orderlist'+str(orderid))
-    if orderlist:
-        return orderlist
+    # orderlist=cache.get('orderlist'+str(orderid))
+    # if orderlist:
+    #     return orderlist
     o=OrderList.objects.get(pk=orderid)
-    orderlist={'id':o.pk,'dj':o.dj,'cz':o.cz,'ddbh':o.ddbh.ddbh,'closedate':o.closeDate,'ordernum':o.num,'code':o.code_id}
-    cache.set('orderlist'+str(orderid),orderlist,60*60*2)
+    orderlist={'id':o.pk,'dj':o.dj,'cz':o.cz,'ddbh':getOrderNoByOrderList(o.ddbh_id).get('ddbh'),'closedate':o.closeDate,'ordernum':o.num,'code':o.code_id}
+    # cache.set('orderlist'+str(orderid),orderlist,3600*24*20)
     return orderlist
 
 def getOrderNoByOrderList(orderid):
@@ -111,6 +111,6 @@ def getOrderNoByOrderList(orderid):
         return orderlist
     o=OrderNo.objects.get(pk=orderid)
     orderlist={'id':o.pk,'ddbh':o.ddbh}
-    cache.set('orderno'+str(orderid),orderlist,60*60*2)
+    cache.set('orderno'+str(orderid),orderlist,3600*24*20)
     return orderlist
 
