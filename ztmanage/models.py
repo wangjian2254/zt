@@ -1,6 +1,6 @@
 #coding=utf-8
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 
 # Create your models here.
 
@@ -27,7 +27,7 @@ class Ztperm(models.Model):
             ('plan_all',u'主计划汇总'),
             ('plan_query',u'主计划查询'),
             ('plan_changerecord',u'主计划修改记录'),
-
+            ('plan_daily',u'生产情况日报表'),
 
             ('order_zhuizong',u'订单追踪'),
             ('orderruning',u'订单执行情况汇总表'),
@@ -35,6 +35,8 @@ class Ztperm(models.Model):
         )
     for code,codename in Meta.permissions:
         perm['ztmanage.'+code]=codename
+    # for p in Permission.objects.all():
+    #     perm['%s.%s'%(p.content_type.app_label,p.codename)]=p.codename
 class Scx(models.Model):
     name=models.CharField(max_length=40,verbose_name='名称',unique=True,help_text='生产线名称')
 #    name=models.CharField(max_length=40,verbose_name='名称',help_text='产品名称')
@@ -259,4 +261,5 @@ class PlanChangeLog(models.Model):
     user = models.ForeignKey(User,verbose_name=u'操作人')
     date = models.DateField(auto_now=True,verbose_name=u'发生日期')
     count = models.IntegerField(default=0,verbose_name=u'修改条数',help_text=u'每一条planrecord算一条，一日内多次修改算一天的。')
+
 
