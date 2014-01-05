@@ -179,6 +179,21 @@ def getPlanDetailByIdOrLsh(request,obj):
 @planchange_required('ztmanage.plan_update')
 @transaction.commit_on_success
 def updatePlanDelete(request,recordids):
+    '''
+    1.判断 计划是否审核过，退审的可以 删除记录，审核的 不可以删除，退审的可以恢复，其他不可以
+    '''
+    planrecordquery = PlanRecord.objects.filter(pk__in=recordids)
+    planrecordquery.update(isdel=True)
+    PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=True)
+    return getResult(True,True,u'删除主计划记录成功')
+
+@login_required
+@planchange_required('ztmanage.plan_update')
+@transaction.commit_on_success
+def updatePlanUNDelete(request,recordids):
+    '''
+    1.判断 计划是否审核过，退审的可以 删除记录，审核的 不可以删除，退审的可以恢复，其他不可以
+    '''
     planrecordquery = PlanRecord.objects.filter(pk__in=recordids)
     planrecordquery.update(isdel=True)
     PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=True)
@@ -211,6 +226,8 @@ def checkPlan(request,obj):
     planno.status = '2'
     planno.shenhe = request.user
     planno.save()
+    PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno)).filter(isdel=True).delete()
+    PlanRecord.objects.filter(planno=planno).filter(isdel=True).delete()
     return getResult(True,True,u'审核 主计划成功，流水号为：%s'%planno.lsh)
 
 @login_required
@@ -239,6 +256,29 @@ def uncheckPlan(request,obj):
     planno.status = '3'
     planno.shenhe = request.user
     planno.save()
+    PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno)).filter(isdel=True).delete()
+    PlanRecord.objects.filter(planno=planno).filter(isdel=True).delete()
+    for planrecord in PlanRecord.objects.filter(planno=planno):
+        oldData={"yddbh":planrecord.orderlist_id}
+        oldData['zydh'] = planrecord.zydh
+        oldData['plannum'] = planrecord.plannum
+        oldData['planbz'] = planrecord.planbz
+        oldData['ordergongyi'] = planrecord.ordergongyi
+        oldData['level'] = planrecord.level
+        oldData['isdel'] = planrecord.isdel
+        PlanRecord.objects.filter(pk=planrecord.pk).update(oldData=json.dumps(oldData))
+
+    for plandetail in PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno).filter(isdel=False)).filter(isdel=False):
+        oldData={}
+        oldData['startdate%s'%plandetail.startsite_id] = plandetail.startdate.strftime('%Y/%m/%d')
+        if plandetail.enddate:
+            oldData['enddate%s'%plandetail.startsite_id] = plandetail.enddate.strftime('%Y/%m/%d')
+        else:
+            oldData['enddate%s'%plandetail.startsite_id] = u'永久'
+        oldData['zrwz%s'%plandetail.startsite_id] = plandetail.endsite_id
+        PlanDetail.objects.filter(pk=plandetail.pk).update(oldData=json.dumps(oldData))
+
+
     return getResult(True,True,u'退审 主计划成功，流水号为：%s'%planno.lsh)
 
 
