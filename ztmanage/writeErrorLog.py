@@ -28,7 +28,9 @@ def errorLog(msg,fun='',xingming='',data=''):
             logger.addHandler(newfilehandler)
             filename=newfilename
         logger.error('%s :'%(time.strftime(TIME_FORMATE_LOG, time.localtime()))+str(msg)+'fun:%s'%fun)
-        logger.error('%s :'%(time.strftime(TIME_FORMATE_LOG, time.localtime()))+'name:%s:%s'%(xingming,str(data)))
+        for k,v in data:
+            logger.error('%s :'%(time.strftime(TIME_FORMATE_LOG, time.localtime()))+'name:%s_key:%s'%(getattr(xingming,'last_name',''),str(k)))
+            logger.error('%s :'%(time.strftime(TIME_FORMATE_LOG, time.localtime()))+'name:%s_value:%s'%(getattr(xingming,'last_name',''),str(v)))
     except Exception,e:
         print e
 
