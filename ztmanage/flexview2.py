@@ -257,6 +257,8 @@ def checkPlan(request,obj):
     planno.save()
     PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno)).filter(isdel=True).delete()
     PlanRecord.objects.filter(planno=planno).filter(isdel=True).delete()
+    PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno)).filter(isdel=False).update(oldData=None)
+    PlanRecord.objects.filter(planno=planno).filter(isdel=False).update(oldData=None)
     return getResult(True,True,u'审核 主计划成功，流水号为：%s'%planno.lsh)
 
 @login_required
@@ -342,6 +344,8 @@ def queryPlanBy(request,planuser,checkuser,startdate,enddate,checkstartdate,chec
         query = query.filter(status__in=('1','3'))
     elif status == 2:
         query = query.filter(status='2')
+
+    query = query.order_by('-updateTime')
 
     resultlist=[]
     for plan in query:

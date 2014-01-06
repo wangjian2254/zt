@@ -3,7 +3,7 @@
 #Time: 下午10:28
 import datetime
 from django.core.cache import cache
-from ztmanage.models import OrderBBNo, PlanNo, Scx, Code, OrderNo, OrderList
+from zt.ztmanage.models import OrderBBNo, PlanNo, Scx, Code, OrderNo, OrderList
 
 __author__ = u'王健'
 
