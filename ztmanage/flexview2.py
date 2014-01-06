@@ -75,6 +75,8 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
     '''
     if lsh:
         planno=PlanNo.objects.get(lsh=lsh)
+        if '2'==planno.status:
+            return getResult(planno,False,u'计划修改失败,流水号：%s，已经审核过了'%planno.lsh)
         for delsite in unsitelist:
             PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno).filter(isdel=False)).filter(startsite=getattr(delsite,'id')).filter(isdel=False).update(isdel=True)
     else:
@@ -123,6 +125,27 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
             plandetail.save()
     return getResult(planno,True,u'计划制定成功,流水号：%s'%planno.lsh)
 
+
+@login_required
+@planchange_required('ztmanage.plan_update')
+@transaction.commit_on_success
+def updatePlanZYDH(request,zydhlist):
+    '''
+    只有审核状态的主计划项的作业单号，可以修改，
+    '''
+    planidlist=[]
+    for obj in zydhlist:
+        planidlist.append(getattr(obj,"recordid",0))
+        try:
+            planrecord = PlanRecord.objects.get(pk=getattr(obj,"recordid",0))
+            if planrecord.planno.status !='2':
+                return getResult(False,False,u'只有审核过的计划才需要单独使用 作业单号修改，其他情况正常修改即可。')
+            planrecord.zydh = getattr(obj,'zydh','')
+            planrecord.save()
+        except :
+            return getResult(False,False,u'只有审核过的计划才需要单独使用 作业单号修改，其他情况正常修改即可。')
+
+    return getResult(True,True,u'作业单号修改成功')
 
 
 @login_required
@@ -183,9 +206,12 @@ def updatePlanDelete(request,recordids):
     1.判断 计划是否审核过，退审的可以 删除记录，审核的 不可以删除，退审的可以恢复，其他不可以
     '''
     planrecordquery = PlanRecord.objects.filter(pk__in=recordids)
+    for record in planrecordquery:
+        if '2'==record.planno.status:
+            return getResult(False,False,u'主计划记录删除失败,流水号：%s，已经审核过了'%record.planno.lsh)
     planrecordquery.update(isdel=True)
     PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=True)
-    return getResult(True,True,u'删除主计划记录成功')
+    return getResult(recordids,True,u'删除主计划记录成功')
 
 @login_required
 @planchange_required('ztmanage.plan_update')
@@ -195,9 +221,12 @@ def updatePlanUNDelete(request,recordids):
     1.判断 计划是否审核过，退审的可以 删除记录，审核的 不可以删除，退审的可以恢复，其他不可以
     '''
     planrecordquery = PlanRecord.objects.filter(pk__in=recordids)
-    planrecordquery.update(isdel=True)
+    for record in planrecordquery:
+        if '3'!=record.planno.status:
+            return getResult(False,False,u'主计划记录恢复失败,流水号：%s，不是退审状态'%record.planno.lsh)
+    planrecordquery.update(isdel=False)
     PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=True)
-    return getResult(True,True,u'删除主计划记录成功')
+    return getResult(recordids,True,u'删除主计划记录成功')
 
 
 @login_required
@@ -326,8 +355,8 @@ def queryPlanBy(request,planuser,checkuser,startdate,enddate,checkstartdate,chec
 
 
 @login_required
-def queryPlanByUser(request):
-    return queryPlanBy(request,request.user,None,None,None,None,None,1)
+def queryPlanByUser(request,status=1):
+    return queryPlanBy(request,request.user,None,None,None,None,None,status)
 
 @login_required
 @permission_required('ztmanage.plan_query')
