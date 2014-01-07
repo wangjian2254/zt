@@ -243,7 +243,7 @@ def checkPlan(request,obj):
         planno = PlanNo.objects.filter(pk=id)[:1]
     if lsh:
         planno = PlanNo.objects.filter(lsh=lsh)[:1]
-    if len(planno):
+    if planno and len(planno):
         planno = planno[0]
     else:
         return getResult(False,False,u'主计划不存在')
@@ -275,7 +275,7 @@ def uncheckPlan(request,obj):
         planno = PlanNo.objects.filter(pk=id)[:1]
     if lsh:
         planno = PlanNo.objects.filter(lsh=lsh)[:1]
-    if len(planno):
+    if planno and len(planno):
         planno = planno[0]
     else:
         return getResult(False,False,u'主计划不存在')
@@ -436,7 +436,31 @@ def getOrderRuningList(request,start,end,ddbh=None):
             resultlist.append(orderdict[str(k)])
     return getResult(resultlist)
 
+def getZYDHByOrderList(request,orderlistids):
+    '''
+    根据订单，查询出 使用过的 作业单号
+    '''
+    zydhdict = {}
+    for orderbb in OrderBB.objects.filter(yorder=orderlistids):
+        k='orderlist%s'%orderbb.yorder_id
+        if not zydhdict.has_key(k):
+            zydhdict[k]=set()
+        if orderbb.yzydh.strip() not in  zydhdict[k]:
+            zydhdict[k].add(orderbb.yzydh.strip())
+    return getResult(zydhdict)
 
+def getZYDHByCode(request,codeListids):
+    '''
+    根据订单，查询出 使用过的 作业单号
+    '''
+    zydhdict = {}
+    for orderbb in OrderBB.objects.filter(yorder__in=OrderList.objects.filter(code__in=codeListids)):
+        k='orderlist%s'%orderbb.yorder_id
+        if not zydhdict.has_key(k):
+            zydhdict[k]=set()
+        if orderbb.yzydh.strip() not in  zydhdict[k]:
+            zydhdict[k].add(orderbb.yzydh.strip())
+    return getResult(zydhdict)
 
 
 
