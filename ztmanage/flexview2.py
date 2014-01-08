@@ -451,12 +451,12 @@ def getZYDHByOrderList(request,orderlistids):
     根据订单，查询出 使用过的 作业单号
     '''
     zydhdict = {}
-    for orderbb in OrderBB.objects.filter(yorder=orderlistids):
-        k='orderlist%s'%orderbb.yorder_id
+    for zydh in Zydh.objects.filter(yorder=orderlistids):
+        k='orderlist%s'%zydh.orderlist_id
         if not zydhdict.has_key(k):
             zydhdict[k]=set()
-        if orderbb.yzydh.strip() not in  zydhdict[k]:
-            zydhdict[k].add(orderbb.yzydh.strip())
+        if zydh.zydh not in  zydhdict[k]:
+            zydhdict[k].add(zydh.zydh)
     return getResult(zydhdict)
 
 def getZYDHByCode(request,codeListids):
@@ -464,12 +464,12 @@ def getZYDHByCode(request,codeListids):
     根据订单，查询出 使用过的 作业单号
     '''
     zydhdict = {}
-    for orderbb in OrderBB.objects.filter(yorder__in=OrderList.objects.filter(code__in=codeListids)):
-        k='orderlist%s'%orderbb.yorder_id
+    for zydh in Zydh.objects.filter(yorder__in=OrderList.objects.filter(code__in=codeListids)):
+        k='orderlist%s'%zydh.orderlist_id
         if not zydhdict.has_key(k):
             zydhdict[k]=set()
-        if orderbb.yzydh.strip() not in  zydhdict[k]:
-            zydhdict[k].add(orderbb.yzydh.strip())
+        if zydh.zydh not in  zydhdict[k]:
+            zydhdict[k].add(zydh.zydh)
     return getResult(zydhdict)
 
 
