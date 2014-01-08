@@ -262,4 +262,12 @@ class PlanChangeLog(models.Model):
     date = models.DateField(auto_now=True,verbose_name=u'发生日期')
     count = models.IntegerField(default=0,verbose_name=u'修改条数',help_text=u'每一条planrecord算一条，一日内多次修改算一天的。')
 
+class Zydh(models.Model):
+    orderlist=models.ForeignKey(OrderList,verbose_name=u'订单项')
+    zydh = models.CharField(max_length=40,verbose_name=u'作业单号')
+    # planrecord = models.ForeignKey(PlanRecord,null=True,blank=True,verbose_name=u'创建作业单号的计划')
+
+    class Meta():
+        unique_together=[('orderlist','zydh')]
+
 

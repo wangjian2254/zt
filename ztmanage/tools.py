@@ -33,17 +33,17 @@ def newPlanLSHNoByUser(user):
     '''
     根据用户，生成流水号
     '''
-    date=datetime.datetime.now().strftime("%Y%m%d")
+    date=datetime.datetime.now().strftime("JH%Y%m%d")
 
     lastNo=PlanNo.objects.filter(lsh__startswith=date+'-'+('000'+str(user.pk))[-3:]+'-').order_by('-lsh')[:1]
     if len(lastNo)>0:
         lsh=lastNo[0].lsh.split('-')[2]
         lsh=int(lsh)
         lsh+=1
-        lsh=lastNo[0].lsh.split('-')[0]+'-'+lastNo[0].lsh.split('-')[1]+'-'+('0000'+str(lsh))[-4:]
+        lsh=lastNo[0].lsh.split('-')[0]+'-'+lastNo[0].lsh.split('-')[1]+'-'+('0000'+str(lsh))[-2:]
         return lsh
     else:
-        return date+'-'+('000'+str(user.pk))[-3:]+'-'+'0000'[-4:]
+        return date+'-'+('000'+str(user.pk))[-3:]+'-'+'0000'[-2:]
 
 
 def delFile(date,is_open):

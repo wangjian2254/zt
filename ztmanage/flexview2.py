@@ -4,7 +4,8 @@
 import datetime,json
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm
+from django.shortcuts import render_to_response
+from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh
 from zt.ztmanage.tools import getResult,  newPlanLSHNoByUser ,getOrderByOrderlistid,getCodeNameById
 
 __author__ = u'王健'
@@ -259,6 +260,15 @@ def checkPlan(request,obj):
     PlanRecord.objects.filter(planno=planno).filter(isdel=True).delete()
     PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno)).filter(isdel=False).update(oldData=None)
     PlanRecord.objects.filter(planno=planno).filter(isdel=False).update(oldData=None)
+    for planrecord in PlanRecord.objects.filter(planrecord=planno).filter(isdel=False):
+        if 0==Zydh.objects.filter(orderlist=planrecord.orderlist_id,zydh=planrecord.zydh).count():
+            try:
+                zydh=Zydh()
+                zydh.zydh=planrecord.zydh
+                zydh.orderlist_id=planrecord.orderlist_id
+                zydh.save()
+            except:
+                pass
     return getResult(True,True,u'审核 主计划成功，流水号为：%s'%planno.lsh)
 
 @login_required
@@ -461,6 +471,29 @@ def getZYDHByCode(request,codeListids):
         if orderbb.yzydh.strip() not in  zydhdict[k]:
             zydhdict[k].add(orderbb.yzydh.strip())
     return getResult(zydhdict)
+
+
+@transaction.commit_on_success
+def initZYDH(request):
+    zybhset=set()
+    for zydh in Zydh.objects.all():
+        zybhset.add((zydh.orderlist_id,zydh.zydh))
+    zybhlist=[]
+    for bb in OrderBB.objects.all():
+        if (bb.yorder_id,bb.yzydh.strip().upper()) not in zybhset:
+            zybhset.add((bb.yorder_id,bb.yzydh.strip().upper()))
+            zybhlist.append((bb.yorder_id,bb.yzydh.strip().upper()))
+    for oid,zy in zybhlist:
+        try:
+            zydh=Zydh()
+            zydh.orderlist_id=oid
+            zydh.zydh =zy
+            zydh.save()
+        except Exception,e:
+            print e
+
+    url='http://'+request.META['HTTP_HOST']+'/static/swf/'
+    return render_to_response('zt/index.html',{'url':url,'p':datetime.datetime.now()})
 
 
 
