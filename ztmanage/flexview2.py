@@ -24,6 +24,11 @@ def str2date(strdate):
 def str2date2(strdate):
     return datetime.datetime.strptime(strdate, '%Y%m%d')
 
+def date2str(date):
+    if date:
+        return date.strftime('%Y/%m/%d')
+    return u'永久'
+
 
 
 def permission_required(code):
@@ -331,17 +336,91 @@ def uncheckPlan(request,obj):
     return getResult(True,True,u'退审 主计划成功，流水号为：%s'%planno.lsh)
 
 
-def getAllOrderNo(request,obj):
+def getAllPlanNo(request,obj):
     l=[]
     for plan in PlanNo.objects.filter(status='2').filter(isdel=False):
         l.append({'id':plan.pk,'lsh':plan.lsh})
     return getResult(l)
 
-@login_required
 @permission_required('ztmanage.plan_query')
-@transaction.commit_on_success
 def queryPlanDetail(request,obj):
-    pass
+    query = PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno__in=PlanNo.objects.filter(status='2')))
+
+    if getattr(obj,'trstart','') and getattr(obj,'trend',''):
+        query = query.filter(startdate__gte=str2date(getattr(obj,'trstart')),startdate__lte=str2date(getattr(obj,'trend')))
+    if getattr(obj,'wcstart','') and getattr(obj,'wcend',''):
+        query = query.filter(enddate__gte=str2date(getattr(obj,'wcstart')),enddate__lte=str2date(getattr(obj,'wcend')))
+    if getattr(obj,'site',''):
+        query = query.filter(startsite=getattr(obj,'site'))
+    if getattr(obj,'zydh',''):
+        query = query.filter(planrecord__in=PlanRecord.objects.filter(zydh=getattr(obj,'zydh')))
+    if getattr(obj,'planid',''):
+        query = query.filter(planrecord__in=PlanRecord.objects.filter(planno__in=PlanNo.objects.get(pk=getattr(obj,'planid'))))
+    if getattr(obj,'orderbhid',''):
+        query = query.filter(planrecord__in=PlanRecord.objects.filter(orderlist__in=OrderList.objects.filter(ddbh=getattr(obj,'orderbhid'))))
+    if getattr(obj,'codeid',''):
+        query = query.filter(planrecord__in=PlanRecord.objects.filter(orderlist__in=OrderList.objects.filter(code=getattr(obj,'codeid'))))
+
+    l=[]
+    for pd in query:
+        r={'id':pd.pk,'planfinish':u'未投','planfinish_i':0,'orderlistid':pd.planrecord.orderlist_id,'code':pd.planrecord.orderlist.code_id,'codestr':pd.planrecord.orderlist.code.code,'codename':pd.planrecord.orderlist.code.name,'scx':pd.planrecord.orderlist.code.scx_id,'scxstr':pd.planrecord.orderlist.code.scx.name,'ddbh':pd.planrecord.orderlist.ddbh.ddbh,'ddbh_id':pd.planrecord.orderlist.ddbh_id,'finishstartdate':'','finishstartnum':'','finishenddate':'','finishendnum':'','bfnum':'','ysnum':''}
+        r['startsite']=pd.startsite.name
+        r['startsite_id']=pd.startsite_id
+        if pd.endsite_id:
+            r['endsite']=pd.endsite.name
+            r['endsite_id']=pd.endsite_id
+        else:
+            r['endsite']=''
+            r['endsite_id']=''
+
+        r['zydh']=pd.planrecord.zydh
+        r['level']=pd.planrecord.level
+        r['plannum']=pd.planrecord.plannum
+        r['startdate']=str2date2(pd.startdate)
+        r['enddate']=str2date2(pd.enddate)
+        r['planlsh']=pd.planrecord.planno.lsh
+        r['ordergongyi']=pd.planrecord.ordergongyi
+        r['planbz']=pd.planrecord.planbz
+
+        r.update(queryPlanDetailComputer(r.get('id'),r.get('zydh'),r.get('orderlistid'),r.get('startsite_id'),r.get('endsite_id',None)))
+        l.append(r)
+    return getResult(l)
+
+
+def queryPlanDetailComputer(id,zydh,orderlist,startsite,endsite=None):
+
+    r={'id':id,'finishstartdate':'','finishstartnum':0,'finishenddate':'','finishendnum':0,'bfnum':0,'ysnum':0}
+
+    for obb in OrderBB.objects.filter(zrorder=orderlist,yzydh=zydh,zrwz=startsite):
+        r['finishstartnum']+=obb.zrwznum
+        if not r['finishstartdate'] or r['finishstartdate']<obb.lsh.lsh.split('-')[0]:
+            r['finishstartdate']=obb.lsh.lsh.split('-')[0]
+
+    query = OrderBB.objects.filter(yorder=orderlist,yzydh=zydh,yzw=startsite)
+    if endsite:
+        query = query.filter(zrwz=endsite)
+    for obb in query:
+        r['finishendnum']+=obb.ywznum
+        r['bfnum']+=obb.bfnum
+        r['ysnum']+=obb.ysnum
+
+        if not r['finishenddate'] or r['finishenddate']<obb.lsh.lsh.split('-')[0]:
+            r['finishenddate']=obb.lsh.lsh.split('-')[0]
+    if r['finishstartnum']==0:
+        r['planfinish']=u'未投'
+        r['planfinish_i']=0
+    elif r['finishstartnum']>=r['finishendnum']+r['bfnum']+r['ysnum']:
+        r['planfinish']=u'完成'
+        r['planfinish_i']=1
+    else:
+        r['planfinish']=u'在线'
+        r['planfinish_i']=2
+    return r
+
+def queryPlanDetailItem(request,id,zydh,orderlist,startsite,endsite=None):
+
+    return getResult(queryPlanDetailComputer(id,zydh,orderlist,startsite,endsite))
+
 
 
 
