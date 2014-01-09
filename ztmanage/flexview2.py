@@ -95,7 +95,7 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
             planrecord = PlanRecord()
             planrecord.planno=planno
         planrecord.orderlist = OrderList.objects.get(pk=getattr(planrecordobj,'yddbh'))
-        planrecord.zydh = getattr(planrecordobj,'zydh')
+        planrecord.zydh = getattr(planrecordobj,'zydh','').strip().upper()
         planrecord.plannum = int(getattr(planrecordobj,'plannum',0))
         planrecord.level = int(getattr(planrecordobj,'level',0))
         planrecord.planbz = getattr(planrecordobj,'planbz','')
@@ -141,8 +141,16 @@ def updatePlanZYDH(request,zydhlist):
             planrecord = PlanRecord.objects.get(pk=getattr(obj,"recordid",0))
             if planrecord.planno.status !='2':
                 return getResult(False,False,u'只有审核过的计划才需要单独使用 作业单号修改，其他情况正常修改即可。')
-            planrecord.zydh = getattr(obj,'zydh','')
+            planrecord.zydh = getattr(obj,'zydh','').strip().upper()
             planrecord.save()
+            if 0==Zydh.objects.filter(orderlist=planrecord.orderlist_id,zydh=planrecord.zydh).count():
+                try:
+                    zydh=Zydh()
+                    zydh.zydh=planrecord.zydh
+                    zydh.orderlist_id=planrecord.orderlist_id
+                    zydh.save()
+                except:
+                    pass
         except :
             return getResult(False,False,u'只有审核过的计划才需要单独使用 作业单号修改，其他情况正常修改即可。')
 
@@ -260,7 +268,7 @@ def checkPlan(request,obj):
     PlanRecord.objects.filter(planno=planno).filter(isdel=True).delete()
     PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno)).filter(isdel=False).update(oldData=None)
     PlanRecord.objects.filter(planno=planno).filter(isdel=False).update(oldData=None)
-    for planrecord in PlanRecord.objects.filter(planrecord=planno).filter(isdel=False):
+    for planrecord in PlanRecord.objects.filter(planno=planno).filter(isdel=False):
         if 0==Zydh.objects.filter(orderlist=planrecord.orderlist_id,zydh=planrecord.zydh).count():
             try:
                 zydh=Zydh()
@@ -323,10 +331,16 @@ def uncheckPlan(request,obj):
     return getResult(True,True,u'退审 主计划成功，流水号为：%s'%planno.lsh)
 
 
+def getAllOrderNo(request,obj):
+    l=[]
+    for plan in PlanNo.objects.filter(status='2').filter(isdel=False):
+        l.append({'id':plan.pk,'lsh':plan.lsh})
+    return getResult(l)
+
 @login_required
-@permission_required('ztmanage.plan_all')
+@permission_required('ztmanage.plan_query')
 @transaction.commit_on_success
-def allPlan(request,obj):
+def queryPlanDetail(request,obj):
     pass
 
 
@@ -373,7 +387,7 @@ def queryPlanByUser(request,status=1):
     return queryPlanBy(request,request.user,None,None,None,None,None,status)
 
 @login_required
-@permission_required('ztmanage.plan_query')
+@permission_required('ztmanage.plan_all')
 def queryPlan(request,planuser,checkuser,startdate,enddate,checkstartdate,checkenddate):
     return queryPlanBy(request,planuser,checkuser,startdate,enddate,checkstartdate,checkenddate)
 
@@ -450,21 +464,25 @@ def getZYDHByOrderList(request,orderlistids):
     '''
     根据订单，查询出 使用过的 作业单号
     '''
-    zydhdict = {}
-    for zydh in Zydh.objects.filter(yorder=orderlistids):
-        k='orderlist%s'%zydh.orderlist_id
-        if not zydhdict.has_key(k):
-            zydhdict[k]=set()
-        if zydh.zydh not in  zydhdict[k]:
-            zydhdict[k].add(zydh.zydh)
-    return getResult(zydhdict)
+    zybhlist = []
+    if isinstance(orderlistids,int):
+        query =Zydh.objects.filter(orderlist=orderlistids)
+    elif len(orderlistids)>0:
+        query =Zydh.objects.filter(orderlist__in=orderlistids)
+    else:
+        return getResult({'orderlist%s'%orderlistids:zybhlist})
+    for zydh in query:
+
+        if zydh.zydh not in zybhlist:
+            zybhlist.append({'txt':zydh.zydh})
+    return getResult({'orderlist%s'%orderlistids:zybhlist})
 
 def getZYDHByCode(request,codeListids):
     '''
     根据订单，查询出 使用过的 作业单号
     '''
     zydhdict = {}
-    for zydh in Zydh.objects.filter(yorder__in=OrderList.objects.filter(code__in=codeListids)):
+    for zydh in Zydh.objects.filter(orderlist__in=OrderList.objects.filter(code__in=codeListids)):
         k='orderlist%s'%zydh.orderlist_id
         if not zydhdict.has_key(k):
             zydhdict[k]=set()
