@@ -133,7 +133,7 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
                     plandetail.endsite = ProductSite.objects.get(pk=getattr(planrecordobj,'zrwz%s'%psite.id))
 
                     errorquery =PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(orderlist=planrecord.orderlist,zydh=planrecord.zydh)).filter(startsite=plandetail.startsite)
-                    if 0<errorquery.count():
+                    if not plandetail.pk and  0<errorquery.count():
                         error = errorquery[0]
                         raise PlanRecordError(error.planrecord.planno_id,error.planrecord.orderlist_id,error.planrecord.zydh,error.startsite_id,error.endsite_id)
                     plandetail.save()
