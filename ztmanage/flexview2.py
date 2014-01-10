@@ -7,6 +7,7 @@ from django.db import transaction
 from django.shortcuts import render_to_response
 from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh
 from zt.ztmanage.tools import getResult,  newPlanLSHNoByUser ,getOrderByOrderlistid,getCodeNameById
+from zt.ztmanage.errors import PlanRecordError
 
 __author__ = u'王健'
 '''
@@ -79,57 +80,75 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
     编制保存主计划，没有经过审核的主计划可以任意修改。
     审核状态的主计划，不可以修改，
     '''
-    if lsh:
-        planno=PlanNo.objects.get(lsh=lsh)
-        if '2'==planno.status:
-            return getResult(planno,False,u'计划修改失败,流水号：%s，已经审核过了'%planno.lsh)
-        for delsite in unsitelist:
-            PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno).filter(isdel=False)).filter(startsite=getattr(delsite,'id')).filter(isdel=False).update(isdel=True)
-    else:
-        planno=PlanNo()
-        planno.lsh=newPlanLSHNoByUser(request.user)
-        planno.status='1'
-    planno.updateTime=datetime.datetime.now()
-    planno.bianzhi=request.user
-    planno.save()
+    try:
+        with transaction.commit_on_success():
+            if lsh:
+                planno=PlanNo.objects.get(lsh=lsh)
+                if '2'==planno.status:
+                    return getResult(planno,False,u'计划修改失败,流水号：%s，已经审核过了'%planno.lsh)
+                for delsite in unsitelist:
+                    PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno).filter(isdel=False)).filter(startsite=getattr(delsite,'id')).filter(isdel=False).update(isdel=True)
+            else:
+                planno=PlanNo()
+                planno.lsh=newPlanLSHNoByUser(request.user)
+                planno.status='1'
+            planno.updateTime=datetime.datetime.now()
+            planno.bianzhi=request.user
+            planno.save()
 
-    for planrecordobj in planrecordlist:
-        if hasattr(planrecordobj,'id'):
-            planrecord = PlanRecord.objects.get(pk=getattr(planrecordobj,'id'))
-        else:
-            planrecord = PlanRecord()
-            planrecord.planno=planno
-        planrecord.orderlist = OrderList.objects.get(pk=getattr(planrecordobj,'yddbh'))
-        planrecord.zydh = getattr(planrecordobj,'zydh','').strip().upper()
-        planrecord.plannum = int(getattr(planrecordobj,'plannum',0))
-        planrecord.level = int(getattr(planrecordobj,'level',0))
-        planrecord.planbz = getattr(planrecordobj,'planbz','')
-        planrecord.ordergongyi = getattr(planrecordobj,'ordergongyi','')
-        planrecord.save()
-        for site in sitelist:
-            psite=ProductSite.objects.get(pk=getattr(site,'id'))
-            plandetail = PlanDetail.objects.filter(planrecord=planrecord).filter(startsite=psite)[:1]
-            if len(plandetail):
-                plandetail = plandetail[0]
-            else:
-                plandetail = PlanDetail()
-                plandetail.planrecord = planrecord
-                plandetail.startsite = psite
-            plandetail.isdel = False
-            if not hasattr(planrecordobj,'startdate%s'%psite.id) or not hasattr(planrecordobj,'zrwz%s'%psite.id):
-                plandetail.isdel=True
-                if plandetail.pk:
+            for planrecordobj in planrecordlist:
+                if hasattr(planrecordobj,'id'):
+                    planrecord = PlanRecord.objects.get(pk=getattr(planrecordobj,'id'))
+                else:
+                    planrecord = PlanRecord()
+                    planrecord.planno=planno
+                planrecord.orderlist = OrderList.objects.get(pk=getattr(planrecordobj,'yddbh'))
+                planrecord.zydh = getattr(planrecordobj,'zydh','').strip().upper()
+                planrecord.plannum = int(getattr(planrecordobj,'plannum',0))
+                planrecord.level = int(getattr(planrecordobj,'level',0))
+                planrecord.planbz = getattr(planrecordobj,'planbz','')
+                planrecord.ordergongyi = getattr(planrecordobj,'ordergongyi','')
+                planrecord.save()
+                for site in sitelist:
+                    psite=ProductSite.objects.get(pk=getattr(site,'id'))
+                    plandetail = PlanDetail.objects.filter(planrecord=planrecord).filter(startsite=psite)[:1]
+                    if len(plandetail):
+                        plandetail = plandetail[0]
+                    else:
+                        plandetail = PlanDetail()
+                        plandetail.planrecord = planrecord
+                        plandetail.startsite = psite
+                    plandetail.isdel = False
+                    if not hasattr(planrecordobj,'startdate%s'%psite.id) or not hasattr(planrecordobj,'zrwz%s'%psite.id):
+                        plandetail.isdel=True
+                        if plandetail.pk:
+                            plandetail.save()
+                        continue
+                    plandetail.startdate = str2date(getattr(planrecordobj,'startdate%s'%psite.id))
+                    if not hasattr(planrecordobj,'enddate%s'%psite.id) or getattr(planrecordobj,'enddate%s'%psite.id,None)==u'永久':
+                        plandetail.enddate=None
+                    else:
+                        plandetail.enddate=str2date(getattr(planrecordobj,'enddate%s'%psite.id))
+                    plandetail.startsite = psite
+                    plandetail.endsite = ProductSite.objects.get(pk=getattr(planrecordobj,'zrwz%s'%psite.id))
+
+                    errorquery =PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(orderlist=planrecord.orderlist,zydh=planrecord.zydh)).filter(startsite=plandetail.startsite)
+                    if 0<errorquery.count():
+                        error = errorquery[0]
+                        raise PlanRecordError(error.planrecord.planno_id,error.planrecord.orderlist_id,error.planrecord.zydh,error.startsite_id,error.endsite_id)
                     plandetail.save()
-                continue
-            plandetail.startdate = str2date(getattr(planrecordobj,'startdate%s'%psite.id))
-            if not hasattr(planrecordobj,'enddate%s'%psite.id) or getattr(planrecordobj,'enddate%s'%psite.id,None)==u'永久':
-                plandetail.enddate=None
-            else:
-                plandetail.enddate=str2date(getattr(planrecordobj,'enddate%s'%psite.id))
-            plandetail.startsite = psite
-            plandetail.endsite = ProductSite.objects.get(pk=getattr(planrecordobj,'zrwz%s'%psite.id))
-            plandetail.save()
-    return getResult(planno,True,u'计划制定成功,流水号：%s'%planno.lsh)
+            return getResult(planno,True,u'计划制定成功,流水号：%s'%planno.lsh)
+    except PlanRecordError ,e:
+        plan = PlanNo.objects.get(pk=e.planno)
+        orderlist = OrderList.objects.get(pk=e.order)
+        zydh = e.zydh
+        startsite = ProductSite.objects.get(pk=e.startsite)
+        if e.endsite:
+            endsite = ProductSite.objects.get(pk=e.endsite)
+        else:
+            endsite={}
+        msg=u'订单号为：%s ,物料号为：%s ,作业单号为：%s ,投入位置为：%s ，去向位置为：%s ，这条计划和流水号：%s 主计划中的一条计划重复。'%(orderlist.ddbh.ddbh,orderlist.code.code,zydh,startsite.name,getattr(endsite,'name',u'无'),plan.lsh)
+        return getResult(False,False,msg)
 
 
 @login_required
@@ -336,7 +355,7 @@ def uncheckPlan(request,obj):
     return getResult(True,True,u'退审 主计划成功，流水号为：%s'%planno.lsh)
 
 
-def getAllPlanNo(request,obj):
+def getAllPlanNo(request):
     l=[]
     for plan in PlanNo.objects.filter(status='2').filter(isdel=False):
         l.append({'id':plan.pk,'lsh':plan.lsh})
@@ -363,7 +382,7 @@ def queryPlanDetail(request,obj):
 
     l=[]
     for pd in query:
-        r={'id':pd.pk,'planfinish':u'未投','planfinish_i':0,'orderlistid':pd.planrecord.orderlist_id,'code':pd.planrecord.orderlist.code_id,'codestr':pd.planrecord.orderlist.code.code,'codename':pd.planrecord.orderlist.code.name,'scx':pd.planrecord.orderlist.code.scx_id,'scxstr':pd.planrecord.orderlist.code.scx.name,'ddbh':pd.planrecord.orderlist.ddbh.ddbh,'ddbh_id':pd.planrecord.orderlist.ddbh_id,'finishstartdate':'','finishstartnum':'','finishenddate':'','finishendnum':'','bfnum':'','ysnum':''}
+        r={'id':pd.pk,'planfinish':u'未投','planfinish_i':0,'orderlistid':pd.planrecord.orderlist_id,'code':pd.planrecord.orderlist.code_id,'codestr':pd.planrecord.orderlist.code.code,'codename':pd.planrecord.orderlist.code.name,'scx':pd.planrecord.orderlist.code.scx_id,'scxstr':pd.planrecord.orderlist.code.scx.name,'ddbh':pd.planrecord.orderlist.ddbh.ddbh,'ddbh_id':pd.planrecord.orderlist.ddbh_id,'finishstartdate':'','finishstartnum':0,'finishenddate':'','finishendnum':0,'bfnum':0,'ysnum':0}
         r['startsite']=pd.startsite.name
         r['startsite_id']=pd.startsite_id
         if pd.endsite_id:
@@ -382,8 +401,69 @@ def queryPlanDetail(request,obj):
         r['ordergongyi']=pd.planrecord.ordergongyi
         r['planbz']=pd.planrecord.planbz
 
-        r.update(queryPlanDetailComputer(r.get('id'),r.get('zydh'),r.get('orderlistid'),r.get('startsite_id'),r.get('endsite_id',None)))
         l.append(r)
+    # for r in l:
+    #     r.update(queryPlanDetailComputer(r.get('id'),r.get('zydh'),r.get('orderlistid'),r.get('startsite_id'),r.get('endsite_id',None)))
+    lm={}
+    zrorderlist=[]
+    zydhlist=[]
+    startsitelist=[]
+    hasendzrorderlist=[]
+    hasendzydhlist=[]
+    hasendstartsitelist=[]
+    hasendendsitelist=[]
+
+    noendzrorderlist=[]
+    noendzydhlist=[]
+    noendstartsitelist=[]
+
+    for r in l:
+        lm['z%(zydh)so%(orderlistid)ss%(startsite_id)se%(endsite_id)s'%r]=r
+        lm['z%(zydh)so%(orderlistid)ss%(startsite_id)s'%r]=r
+        zrorderlist.append(r['orderlistid'])
+        zydhlist.append(r['zydh'])
+        startsitelist.append(r['startsite_id'])
+        if r.get('endsite_id',''):
+            hasendendsitelist.append(r['endsite_id'])
+            hasendzrorderlist.append(r['orderlistid'])
+            hasendzydhlist.append(r['zydh'])
+            hasendstartsitelist.append(r['startsite_id'])
+        else:
+            noendzrorderlist.append(r['orderlistid'])
+            noendzydhlist.append(r['zydh'])
+            noendstartsitelist.append(r['startsite_id'])
+
+    for obb in OrderBB.objects.filter(zrorder__in=zrorderlist,yzydh__in=zydhlist,zrwz__in=startsitelist):
+        if lm.has_key('z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)):
+            lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
+            if not lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
+                lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
+            lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
+            if not lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
+                lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
+    for obb in OrderBB.objects.filter(yorder__in=noendzrorderlist,yzydh__in=noendzydhlist,yzw__in=noendstartsitelist,zrwz=None):
+        if lm.has_key('z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.ywz_id)):
+            lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
+            if not lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
+                lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
+    for obb in OrderBB.objects.filter(yorder__in=hasendzrorderlist,yzydh__in=hasendzydhlist,yzw__in=hasendstartsitelist,zrwz=hasendendsitelist):
+        if lm.has_key('z%so%ss%se%s'%(obb.yzydh,obb.zrorder_id,obb.ywz_id,obb.zrwz_id)):
+            lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
+            if not lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
+                lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
+    for r in l:
+        if r['finishstartnum']==0:
+            r['planfinish']=u'未投'
+            r['planfinish_i']=0
+        elif r['finishstartnum']==r['finishendnum']+r['bfnum']+r['ysnum']:
+            r['planfinish']=u'完成'
+            r['planfinish_i']=1
+        elif r['finishstartnum']>r['finishendnum']+r['bfnum']+r['ysnum']:
+            r['planfinish']=u'在线'
+            r['planfinish_i']=2
+        else:
+            r['planfinish']=u'异常'
+            r['planfinish_i']=3
     return getResult(l)
 
 

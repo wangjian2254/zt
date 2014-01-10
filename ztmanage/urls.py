@@ -10,9 +10,9 @@ from zt.ztmanage.flexview import autoCompleteGenZong
 from zt.ztmanage.views import noperm, dataadd, codeupload, orderbbsave, orderbblist
 from zt.ztmanage.dataPrint import getExcelByData
 from zt.ztmanage.flexurls import orderGateway
-from ztmanage.flexview2 import initZYDH
+from zt.ztmanage.flexview2 import initZYDH
 
-urlpatterns = patterns('^zt/$',
+urlpatterns = patterns(r'^zt/$',
                        (r'^top/$', top),
                        (r'^menu/$', menu),
                        (r'^welcome/$', welcome),
