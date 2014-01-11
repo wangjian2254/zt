@@ -446,7 +446,7 @@ def saveOrder(request,orderlist,ddbh,bhname):
         
     for obj in orderlist:
 
-        if obj.has_key('id'):
+        if getattr(obj,'id',''):
             o=OrderList.objects.get(pk=obj['id'])
         else:
             o=OrderList()

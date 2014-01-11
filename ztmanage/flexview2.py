@@ -280,7 +280,7 @@ def checkPlan(request,obj):
         planno = planno[0]
     else:
         return getResult(False,False,u'主计划不存在')
-    if planno.bianzhi_id != request.user.id:
+    if planno.bianzhi_id == request.user.id:
         return getResult(False,False,u'不能 审核 自己编制的主计划')
     if planno.status == "2":
         return getResult(False,False,u'已经审核过的主计划 不能 再次 审核')
@@ -322,7 +322,7 @@ def uncheckPlan(request,obj):
     else:
         return getResult(False,False,u'主计划不存在')
 
-    if planno.bianzhi_id != request.user.id:
+    if planno.bianzhi_id == request.user.id:
         return getResult(False,False,u'不能 退审 自己编制的主计划')
     if planno.status != "2":
         return getResult(False,False,u'未审核过的主计划 不能 退审')
@@ -364,17 +364,16 @@ def getAllPlanNo(request):
 @permission_required('ztmanage.plan_query')
 def queryPlanDetail(request,obj):
     query = PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno__in=PlanNo.objects.filter(status='2')))
-
     if getattr(obj,'trstart','') and getattr(obj,'trend',''):
-        query = query.filter(startdate__gte=str2date(getattr(obj,'trstart')),startdate__lte=str2date(getattr(obj,'trend')))
+        query = query.filter(startdate__gte=str2date2(getattr(obj,'trstart')),startdate__lte=str2date2(getattr(obj,'trend')))
     if getattr(obj,'wcstart','') and getattr(obj,'wcend',''):
-        query = query.filter(enddate__gte=str2date(getattr(obj,'wcstart')),enddate__lte=str2date(getattr(obj,'wcend')))
+        query = query.filter(enddate__gte=str2date2(getattr(obj,'wcstart')),enddate__lte=str2date2(getattr(obj,'wcend')))
     if getattr(obj,'site',''):
         query = query.filter(startsite=getattr(obj,'site'))
     if getattr(obj,'zydh',''):
         query = query.filter(planrecord__in=PlanRecord.objects.filter(zydh=getattr(obj,'zydh')))
     if getattr(obj,'planid',''):
-        query = query.filter(planrecord__in=PlanRecord.objects.filter(planno__in=PlanNo.objects.get(pk=getattr(obj,'planid'))))
+        query = query.filter(planrecord__in=PlanRecord.objects.filter(planno=PlanNo.objects.get(pk=getattr(obj,'planid'))))
     if getattr(obj,'orderbhid',''):
         query = query.filter(planrecord__in=PlanRecord.objects.filter(orderlist__in=OrderList.objects.filter(ddbh=getattr(obj,'orderbhid'))))
     if getattr(obj,'codeid',''):
@@ -382,7 +381,7 @@ def queryPlanDetail(request,obj):
 
     l=[]
     for pd in query:
-        r={'id':pd.pk,'planfinish':u'未投','planfinish_i':0,'orderlistid':pd.planrecord.orderlist_id,'code':pd.planrecord.orderlist.code_id,'codestr':pd.planrecord.orderlist.code.code,'codename':pd.planrecord.orderlist.code.name,'scx':pd.planrecord.orderlist.code.scx_id,'scxstr':pd.planrecord.orderlist.code.scx.name,'ddbh':pd.planrecord.orderlist.ddbh.ddbh,'ddbh_id':pd.planrecord.orderlist.ddbh_id,'finishstartdate':'','finishstartnum':0,'finishenddate':'','finishendnum':0,'bfnum':0,'ysnum':0}
+        r={'id':pd.pk,'planfinish':u'未投','planfinish_i':0,'orderlistid':pd.planrecord.orderlist_id,'code':pd.planrecord.orderlist.code_id,'codestr':pd.planrecord.orderlist.code.code,'codename':pd.planrecord.orderlist.code.name,'codegg':pd.planrecord.orderlist.code.gg,'scx':pd.planrecord.orderlist.code.scx_id,'scxstr':pd.planrecord.orderlist.code.scx.name,'ddbh':pd.planrecord.orderlist.ddbh.ddbh,'ddbh_id':pd.planrecord.orderlist.ddbh_id,'finishstartdate':'','finishstartnum':0,'finishenddate':'','finishendnum':0,'bfnum':0,'ysnum':0}
         r['startsite']=pd.startsite.name
         r['startsite_id']=pd.startsite_id
         if pd.endsite_id:
@@ -395,8 +394,8 @@ def queryPlanDetail(request,obj):
         r['zydh']=pd.planrecord.zydh
         r['level']=pd.planrecord.level
         r['plannum']=pd.planrecord.plannum
-        r['startdate']=str2date2(pd.startdate)
-        r['enddate']=str2date2(pd.enddate)
+        r['startdate']=date2str(pd.startdate)
+        r['enddate']=date2str(pd.enddate)
         r['planlsh']=pd.planrecord.planno.lsh
         r['ordergongyi']=pd.planrecord.ordergongyi
         r['planbz']=pd.planrecord.planbz
@@ -441,12 +440,12 @@ def queryPlanDetail(request,obj):
             lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
             if not lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
                 lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
-    for obb in OrderBB.objects.filter(yorder__in=noendzrorderlist,yzydh__in=noendzydhlist,yzw__in=noendstartsitelist,zrwz=None):
+    for obb in OrderBB.objects.filter(yorder__in=noendzrorderlist,yzydh__in=noendzydhlist,ywz__in=noendstartsitelist,zrwz=None):
         if lm.has_key('z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.ywz_id)):
             lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
             if not lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
                 lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
-    for obb in OrderBB.objects.filter(yorder__in=hasendzrorderlist,yzydh__in=hasendzydhlist,yzw__in=hasendstartsitelist,zrwz=hasendendsitelist):
+    for obb in OrderBB.objects.filter(yorder__in=hasendzrorderlist,yzydh__in=hasendzydhlist,ywz__in=hasendstartsitelist,zrwz__in=hasendendsitelist):
         if lm.has_key('z%so%ss%se%s'%(obb.yzydh,obb.zrorder_id,obb.ywz_id,obb.zrwz_id)):
             lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
             if not lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
