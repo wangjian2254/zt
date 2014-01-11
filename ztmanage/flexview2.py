@@ -19,6 +19,8 @@ __author__ = u'王健'
 ('plan_changerecord',u'主计划修改记录'),
 '''
 
+PLANSTATUS=(u'非常紧急',u'一般紧急',u'标准生产',u'库备')
+
 def str2date(strdate):
     return datetime.datetime.strptime(strdate, '%Y/%m/%d')
 
@@ -392,7 +394,7 @@ def queryPlanDetail(request,obj):
             r['endsite_id']=''
 
         r['zydh']=pd.planrecord.zydh
-        r['level']=pd.planrecord.level
+        r['level']=PLANSTATUS[pd.planrecord.level]
         r['plannum']=pd.planrecord.plannum
         r['startdate']=date2str(pd.startdate)
         r['enddate']=date2str(pd.enddate)
@@ -437,32 +439,30 @@ def queryPlanDetail(request,obj):
             lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
             if not lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
                 lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
-            lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
-            if not lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
-                lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
+
     for obb in OrderBB.objects.filter(yorder__in=noendzrorderlist,yzydh__in=noendzydhlist,ywz__in=noendstartsitelist,zrwz=None):
-        if lm.has_key('z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.ywz_id)):
-            lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
-            if not lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
-                lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
+        if lm.has_key('z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.ywz_id)):
+            lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishendnum']+=obb.ywznum
+            if not lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishenddate'] or lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishenddate']<obb.lsh.lsh.split('-')[0]:
+                lm['z%so%ss%s'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishenddate']=obb.lsh.lsh.split('-')[0]
     for obb in OrderBB.objects.filter(yorder__in=hasendzrorderlist,yzydh__in=hasendzydhlist,ywz__in=hasendstartsitelist,zrwz__in=hasendendsitelist):
         if lm.has_key('z%so%ss%se%s'%(obb.yzydh,obb.zrorder_id,obb.ywz_id,obb.zrwz_id)):
-            lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartnum']+=obb.zrwznum
-            if not lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate'] or lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']<obb.lsh.lsh.split('-')[0]:
-                lm['z%so%ss%se'%(obb.yzydh,obb.zrorder_id,obb.zrwz_id)]['finishstartdate']=obb.lsh.lsh.split('-')[0]
+            lm['z%so%ss%se%s'%(obb.yzydh,obb.zrorder_id,obb.ywz_id,obb.zrwz_id)]['finishendnum']+=obb.ywznum
+            if not lm['z%so%ss%se%s'%(obb.yzydh,obb.zrorder_id,obb.ywz_id,obb.zrwz_id)]['finishenddate'] or lm['z%so%ss%se%s'%(obb.yzydh,obb.zrorder_id,obb.ywz_id,obb.zrwz_id)]['finishenddate']<obb.lsh.lsh.split('-')[0]:
+                lm['z%so%ss%se%s'%(obb.yzydh,obb.zrorder_id,obb.ywz_id,obb.zrwz_id)]['finishenddate']=obb.lsh.lsh.split('-')[0]
     for r in l:
         if r['finishstartnum']==0:
             r['planfinish']=u'未投'
-            r['planfinish_i']=0
+            r['planfinish_i']=1
         elif r['finishstartnum']==r['finishendnum']+r['bfnum']+r['ysnum']:
             r['planfinish']=u'完成'
-            r['planfinish_i']=1
+            r['planfinish_i']=2
         elif r['finishstartnum']>r['finishendnum']+r['bfnum']+r['ysnum']:
             r['planfinish']=u'在线'
-            r['planfinish_i']=2
+            r['planfinish_i']=3
         else:
             r['planfinish']=u'异常'
-            r['planfinish_i']=3
+            r['planfinish_i']=4
     return getResult(l)
 
 
