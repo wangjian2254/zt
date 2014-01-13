@@ -5,7 +5,7 @@ import datetime,json
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import render_to_response
-from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh
+from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo
 from zt.ztmanage.tools import getResult,  newPlanLSHNoByUser ,getOrderByOrderlistid,getCodeNameById
 from zt.ztmanage.errors import PlanRecordError
 
@@ -17,6 +17,7 @@ __author__ = u'王健'
 ('plan_all',u'主计划汇总'),
 ('plan_query',u'主计划查询'),
 ('plan_changerecord',u'主计划修改记录'),
+('plan_daily',u'生产情况日报表'),
 '''
 
 PLANSTATUS=(u'非常紧急',u'一般紧急',u'标准生产',u'库备')
@@ -499,6 +500,24 @@ def queryPlanDetailComputer(id,zydh,orderlist,startsite,endsite=None):
 def queryPlanDetailItem(request,id,zydh,orderlist,startsite,endsite=None):
 
     return getResult(queryPlanDetailComputer(id,zydh,orderlist,startsite,endsite))
+
+@login_required
+@permission_required('ztmanage.plan_daily')
+def queryPlanDaily(request,startdate,enddate):
+    '''
+    日计划完成情况
+    1.根据日期，查找计划
+    2.根据日期，查找日报表
+    3.根据日报表，逆推计划
+    '''
+    datelist=[]
+    datamap={}
+    for bb in OrderBB.objects.filter(lsh__in=OrderBBNo.objects.filter(lsh__gte=startdate,lsh__lte=enddate)):
+        d=bb.lsh.lsh.split('-')[0]
+        if d not in datelist:
+            datelist.append(d)
+            datamap[d]={'date':d,'bzxiangjh':0,'bzxiangsj':0,'bzjianjh':0,'bzjiansj':0,'qqxingsj':0,'qqjiansj':0,'tqxiangsj':0,'tqjiansj':0,'jianri':0,'xiangri':0}
+        datamap[d]
 
 
 
