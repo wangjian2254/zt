@@ -253,7 +253,7 @@ class PlanDetail(models.Model):
     startdate=models.DateField(db_index=True,verbose_name=u'计划投入日期',help_text=u'物料计划投入生产的日期')
     enddate=models.DateField(db_index=True,blank=True,null=True,verbose_name=u'计划完成日期',help_text=u'物料计划完成生产的日期,为空则是永久停留')
     startsite = models.ForeignKey(ProductSite,db_index=True,related_name='startsite',verbose_name=u'起始作业区',help_text=u'生产的作业区')
-    endsite = models.ForeignKey(ProductSite,db_index=True,related_name='endsite',verbose_name=u'去向作业区',help_text=u'去向位置')
+    endsite = models.ForeignKey(ProductSite,db_index=True,blank=True,null=True,related_name='endsite',verbose_name=u'去向作业区',help_text=u'去向位置')
     isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
     oldData = models.TextField(blank=True,null=True,verbose_name=u'退审时修改前的数据',help_text=u'用来在审核时，和修改的数据做比较，将其他数据用json方式保存')
 

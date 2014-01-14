@@ -122,7 +122,7 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
                         plandetail.planrecord = planrecord
                         plandetail.startsite = psite
                     plandetail.isdel = False
-                    if not hasattr(planrecordobj,'startdate%s'%psite.id) or not hasattr(planrecordobj,'zrwz%s'%psite.id):
+                    if not getattr(planrecordobj,'startdate%s'%psite.id,None):
                         plandetail.isdel=True
                         if plandetail.pk:
                             plandetail.save()
@@ -133,7 +133,10 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
                     else:
                         plandetail.enddate=str2date(getattr(planrecordobj,'enddate%s'%psite.id))
                     plandetail.startsite = psite
-                    plandetail.endsite = ProductSite.objects.get(pk=getattr(planrecordobj,'zrwz%s'%psite.id))
+                    if getattr(planrecordobj,'zrwz%s'%psite.id,None):
+                        plandetail.endsite = ProductSite.objects.get(pk=getattr(planrecordobj,'zrwz%s'%psite.id))
+                    else:
+                        plandetail.endsite = None
 
                     errorquery =PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(orderlist=planrecord.orderlist,zydh=planrecord.zydh)).filter(startsite=plandetail.startsite)
                     if not plandetail.pk and  0<errorquery.count():
@@ -245,8 +248,13 @@ def updatePlanDelete(request,recordids):
     for record in planrecordquery:
         if '2'==record.planno.status:
             return getResult(False,False,u'主计划记录删除失败,流水号：%s，已经审核过了'%record.planno.lsh)
-    planrecordquery.update(isdel=True)
-    PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=True)
+        if '1'==record.planno.status:
+            PlanDetail.objects.filter(planrecord=record).delete()
+            record.delete()
+        else:
+            record.isdel=True
+            record.save()
+            PlanDetail.objects.filter(planrecord=record).update(isdel=True)
     return getResult(recordids,True,u'删除主计划记录成功')
 
 @login_required
@@ -261,7 +269,7 @@ def updatePlanUNDelete(request,recordids):
         if '3'!=record.planno.status:
             return getResult(False,False,u'主计划记录恢复失败,流水号：%s，不是退审状态'%record.planno.lsh)
     planrecordquery.update(isdel=False)
-    PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=True)
+    PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=False)
     return getResult(recordids,True,u'删除主计划记录成功')
 
 
@@ -283,7 +291,7 @@ def checkPlan(request,obj):
         planno = planno[0]
     else:
         return getResult(False,False,u'主计划不存在')
-    if planno.bianzhi_id == request.user.id:
+    if planno.bianzhi_id != request.user.id:
         return getResult(False,False,u'不能 审核 自己编制的主计划')
     if planno.status == "2":
         return getResult(False,False,u'已经审核过的主计划 不能 再次 审核')
@@ -325,7 +333,7 @@ def uncheckPlan(request,obj):
     else:
         return getResult(False,False,u'主计划不存在')
 
-    if planno.bianzhi_id == request.user.id:
+    if planno.bianzhi_id != request.user.id:
         return getResult(False,False,u'不能 退审 自己编制的主计划')
     if planno.status != "2":
         return getResult(False,False,u'未审核过的主计划 不能 退审')
@@ -512,12 +520,25 @@ def queryPlanDaily(request,startdate,enddate):
     '''
     datelist=[]
     datamap={}
+
+    projectdict={}
+    projectkey='list%szydh%ssite%s'
+
+    for plan in PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(plan__in=PlanNo.objects.filter(status='2')),enddate__gte=str2date2(startdate),enddate__lte=str2date2(enddate)):
+        d=plan.enddate.strftime('%Y%m%d')
+        if d not in datelist:
+            datelist.append(d)
+            datamap[d]={'date':d,'bzxiangjh':0,'bzxiangsj':0,'bzjianjh':0,'bzjiansj':0,'qqxingsj':0,'qqjiansj':0,'tqxiangsj':0,'tqjiansj':0,'jianri':0,'xiangri':0}
+        projectdict[projectkey%(plan.planrecord.orderlist_id,plan.planrecord.zydh,plan.startsite_id)]=d
+        datamap[d]['bzxiangjh']+=1
+
+
     for bb in OrderBB.objects.filter(lsh__in=OrderBBNo.objects.filter(lsh__gte=startdate,lsh__lte=enddate)):
         d=bb.lsh.lsh.split('-')[0]
         if d not in datelist:
             datelist.append(d)
             datamap[d]={'date':d,'bzxiangjh':0,'bzxiangsj':0,'bzjianjh':0,'bzjiansj':0,'qqxingsj':0,'qqjiansj':0,'tqxiangsj':0,'tqjiansj':0,'jianri':0,'xiangri':0}
-        datamap[d]
+        # datamap[d][]
 
 
 

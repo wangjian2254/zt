@@ -1,6 +1,7 @@
 #coding=utf-8
 #Date: 11-12-8
 #Time: 下午10:28
+import urllib
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, Http404
 import json
@@ -22,8 +23,8 @@ def getExcelByData(request):
     response = HttpResponse(mimetype=u'application/ms-excel')
     excelname = data.get('excelname','')
     sheetname = data.get('sheetname','')
-    filename = u'%s.xls'%excelname
-    response['Content-Disposition'] = (u'attachment;filename=%s' % filename).encode('utf-8')
+    filename = '%s.xls'%urllib.quote(excelname.encode('utf-8'))
+    response['Content-Disposition'] = ('attachment;filename=%s' % filename).encode('utf-8')
 
 
     style1=xlwt.XFStyle()
@@ -68,8 +69,13 @@ def getExcelByGroupData(request):
     response = HttpResponse(mimetype=u'application/ms-excel')
     excelname = data.get('excelname','')
     sheetname = data.get('sheetname','')
-    filename = u'%s.xls'%excelname
-    response['Content-Disposition'] = (u'attachment;filename=%s' % filename).encode('utf-8')
+
+    filename = u'%s.xls'%urllib.quote(excelname.encode('utf-8'))
+    if hasattr(request,'META') and request.META.has_key('HTTP_USER_AGENT'):
+        if request.META['HTTP_USER_AGENT'].find("Firefox")!=-1:
+            filename = u'%s.xls'%excelname
+
+    response['Content-Disposition'] = ('attachment;filename=%s' % filename).encode('utf-8')
 
 
     style1=xlwt.XFStyle()

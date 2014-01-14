@@ -8,7 +8,7 @@ from django.contrib.auth.models import User, Permission
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from zt.settings import MEDIA_ROOT
-from zt.ztmanage.models import OrderBBNo, Scx, Code, ProductSite, OrderNo, OrderList, OrderBBLock, OrderBB, OrderGenZong
+from zt.ztmanage.models import OrderBBNo, Scx, Code, ProductSite, OrderNo, OrderList, OrderBBLock, OrderBB, OrderGenZong, Zydh
 from zt.ztmanage.errors import  CompluteNumError
 from django.db import transaction
 from zt.ztmanage.models import Ztperm
@@ -106,7 +106,7 @@ def saveUser(request,obj):
 
 #    u.is_active=True
     u.save()
-    u.user_permissions=[]
+    u.user_permissions=set()
     for p in Permission.objects.filter(codename__in=obj['permissions']):
         u.user_permissions.add(p)
     
@@ -622,6 +622,15 @@ def saveOrderBB(request,orderbblist,lsh=None):
                 orderBBList.append(o)
             computeOrderMonitorByLsh(lsh.lsh.split('-')[0],orderBBList)
             delFile(date,True)
+            for o in orderBBList:
+                if 0==Zydh.objects.filter(orderlist=o.yorder_id,zydh=o.yzydh).count():
+                    try:
+                        zydh=Zydh()
+                        zydh.zydh=o.yzydh
+                        zydh.orderlist_id=o.yorder_id
+                        zydh.save()
+                    except:
+                        pass
             return getResult(lsh.lsh)
     except CompluteNumError,e:
         order=OrderList.objects.get(pk=e.order)
@@ -678,6 +687,21 @@ def getOrderBBByLsh(request,lshstr):
 def getOrderGenZongToday(request,datestart,is_open,ddbh=None,code=None):
 
     return getOrderGenZongByDate(request,datestart,is_open,None,None,True)
+
+@login_required
+@permission_required('ztmanage.order_zhuizong')
+@transaction.commit_on_success
+def getOrderGenZongCache(request,datestart,is_open,ddbh=None,code=None):
+    if is_open=='open':
+        is_open=True
+    else:
+        is_open=False
+
+    #if hasFile(datestart,is_open):
+    r= getPickleObj(datestart,is_open)
+    if r:
+        return r
+    return getResult(False,True,u'没有已经缓存好的数据，如需查询，请点击“同步数据”')
 
 @login_required
 @permission_required('ztmanage.order_zhuizong')
