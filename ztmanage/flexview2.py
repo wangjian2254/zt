@@ -87,12 +87,14 @@ def updatePlan(request,sitelist,unsitelist,planrecordlist,lsh=None):
         with transaction.commit_on_success():
             if lsh:
                 planno=PlanNo.objects.get(lsh=lsh)
+                planno.updateTime=datetime.datetime.now()
                 if '2'==planno.status:
                     return getResult(planno,False,u'计划修改失败,流水号：%s，已经审核过了'%planno.lsh)
                 for delsite in unsitelist:
                     PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno).filter(isdel=False)).filter(startsite=getattr(delsite,'id')).filter(isdel=False).update(isdel=True)
             else:
                 planno=PlanNo()
+                planno.updateTime=datetime.datetime.now()
                 planno.lsh=newPlanLSHNoByUser(request.user)
                 planno.status='1'
             planno.updateTime=datetime.datetime.now()
@@ -522,15 +524,17 @@ def queryPlanDaily(request,startdate,enddate):
     datamap={}
 
     projectdict={}
-    projectkey='list%szydh%ssite%s'
+    projectkey='%s_%s_%s_%s'
 
     for plan in PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(plan__in=PlanNo.objects.filter(status='2')),enddate__gte=str2date2(startdate),enddate__lte=str2date2(enddate)):
         d=plan.enddate.strftime('%Y%m%d')
         if d not in datelist:
             datelist.append(d)
             datamap[d]={'date':d,'bzxiangjh':0,'bzxiangsj':0,'bzjianjh':0,'bzjiansj':0,'qqxingsj':0,'qqjiansj':0,'tqxiangsj':0,'tqjiansj':0,'jianri':0,'xiangri':0}
-        projectdict[projectkey%(plan.planrecord.orderlist_id,plan.planrecord.zydh,plan.startsite_id)]=d
+
+        projectdict[projectkey%(plan.planrecord.orderlist_id,plan.planrecord.zydh,plan.startsite_id,plan.endsite_id)]={'date':d,'zrnum':0,'zcnum':0,'ysnum':0,'bfnum':0}
         datamap[d]['bzxiangjh']+=1
+        datamap[d]['bzjianjh']+=plan.planrecord.plannum
 
 
     for bb in OrderBB.objects.filter(lsh__in=OrderBBNo.objects.filter(lsh__gte=startdate,lsh__lte=enddate)):
@@ -538,7 +542,12 @@ def queryPlanDaily(request,startdate,enddate):
         if d not in datelist:
             datelist.append(d)
             datamap[d]={'date':d,'bzxiangjh':0,'bzxiangsj':0,'bzjianjh':0,'bzjiansj':0,'qqxingsj':0,'qqjiansj':0,'tqxiangsj':0,'tqjiansj':0,'jianri':0,'xiangri':0}
-        # datamap[d][]
+        if projectdict.has_key(projectkey%(bb.yorder_id,bb.yzydh,bb.ywz_id,bb.zrwz_id)):
+            datamap[projectdict[projectkey%(bb.yorder_id,bb.yzydh,bb.ywz_id,bb.zrwz_id)].get('date')]['bzjiansj']+=bb.ywznum
+            projectdict[projectkey%(bb.yorder_id,bb.yzydh,bb.ywz_id,bb.zrwz_id)]['zcnum']+=bb.ywznum
+            projectdict[projectkey%(bb.yorder_id,bb.yzydh,bb.ywz_id,bb.zrwz_id)]['ysnum']+=bb.ysnum
+            projectdict[projectkey%(bb.yorder_id,bb.yzydh,bb.ywz_id,bb.zrwz_id)]['bfnum']+=bb.bfnum
+
 
 
 
@@ -669,11 +678,15 @@ def getZYDHByOrderList(request,orderlistids):
         query =Zydh.objects.filter(orderlist__in=orderlistids)
     else:
         return getResult({'orderlist%s'%orderlistids:zybhlist})
-    for zydh in query:
+    datadict={}
 
-        if zydh.zydh not in zybhlist:
-            zybhlist.append({'txt':zydh.zydh})
-    return getResult({'orderlist%s'%orderlistids:zybhlist})
+    for zydh in query:
+        if not datadict.has_key('orderlist%s'%zydh.orderlist_id):
+            datadict['orderlist%s'%zydh.orderlist_id]=[]
+
+        datadict['orderlist%s'%zydh.orderlist_id].append({'txt':zydh.zydh})
+
+    return getResult(datadict)
 
 def getZYDHByCode(request,codeListids):
     '''

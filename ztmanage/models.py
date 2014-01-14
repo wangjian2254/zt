@@ -217,7 +217,7 @@ class PlanNo(models.Model):
     )
 
     lsh = models.CharField(max_length=20,unique=True,verbose_name=u'主计划流水号',help_text=u'主计划流水号')
-    updateTime = models.DateField(auto_now=True,db_index=True,verbose_name=u'编制日期',help_text=u'每修改一次，改变一次')
+    updateTime = models.DateField(db_index=True,verbose_name=u'编制日期',help_text=u'每修改一次，改变一次')
     firstcheckTime = models.DateField(auto_now=True,blank=True,null=True,db_index=True,verbose_name=u'第一次审核日期',help_text=u'第一次审核')
     lastcheckTime = models.DateField(auto_now=True,blank=True,null=True,db_index=True,verbose_name=u'最后一次审核日期',help_text=u'最后一次审核')
     bianzhi = models.ForeignKey(User,related_name='bianzhi',db_index=True,verbose_name=u'编制人',help_text=u'编制计划的用户')
