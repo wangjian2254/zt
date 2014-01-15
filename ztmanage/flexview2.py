@@ -5,7 +5,7 @@ import datetime, json
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import render_to_response
-from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo
+from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo, Code
 from zt.ztmanage.tools import getResult, newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById
 from zt.ztmanage.errors import PlanRecordError
 
@@ -559,7 +559,7 @@ def queryPlanDetailItem(request, id, zydh, orderlist, startsite, endsite=None):
 
 @login_required
 @permission_required('ztmanage.plan_daily')
-def queryPlanDaily(request, startdate, enddate):
+def queryPlanDaily(request, startdate, enddate,scxid,siteid):
     '''
     日计划完成情况
     1.根据日期，查找计划
@@ -586,9 +586,16 @@ def queryPlanDaily(request, startdate, enddate):
     projectdictqq = {}
     # projectkey = '%s_%s_%s_%s'
 
-    for plan in PlanDetail.objects.filter(
-            planrecord__in=PlanRecord.objects.filter(planno__in=PlanNo.objects.filter(status='2')),
-            enddate__gte=str2date2(startdate), enddate__lte=str2date2(enddate)):
+    precordquery=PlanRecord.objects.filter(planno__in=PlanNo.objects.filter(status='2'))
+    if scxid:
+        precordquery=precordquery.filter(orderlist__in=OrderList.objects.filter(code__in=Code.objects.filter(scx=scxid)))
+    pqurey=PlanDetail.objects.filter(
+            planrecord__in=precordquery,
+            enddate__gte=str2date2(startdate), enddate__lte=str2date2(enddate))
+    if siteid:
+        pqurey=pqurey.filter(startsite=siteid)
+
+    for plan in pqurey:
         d = str(plan.enddate.strftime('%Y%m%d'))
         if d not in datelist:
             datelist.append(d)
@@ -600,7 +607,13 @@ def queryPlanDaily(request, startdate, enddate):
         datamap[d]['bzxiangjh'] += 1
         datamap[d]['bzjianjh'] += plan.planrecord.plannum
 
-    for bb in OrderBB.objects.filter(lsh__in=OrderBBNo.objects.filter(lsh__gte=startdate, lsh__lte=enddate)):
+    orderbbquery=OrderBB.objects.filter(lsh__in=OrderBBNo.objects.filter(lsh__gte=startdate, lsh__lte=enddate))
+    if scxid:
+        orderbbquery=orderbbquery.filter(yorder__in=OrderList.objects.filter(code__in=Code.objects.filter(scx=scxid)))
+    if siteid:
+        orderbbquery=orderbbquery.filter(ywz=siteid)
+
+    for bb in orderbbquery:
         d = str(bb.lsh.lsh.split('-')[0])
         dictkey=(bb.yorder_id, bb.yzydh, bb.ywz_id, bb.zrwz_id)
         if d not in datelist:
