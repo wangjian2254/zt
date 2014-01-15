@@ -37,12 +37,18 @@ def uploadImage(request):
     with open(img1,'wb') as f:
         f.write(base64.decodestring(s))
 
-    Image.open(img1).convert("RGB").save(img1bmp)
+
 
     s=str(data.get('img2','').replace(' ','+'))
     with open(img2,'wb') as f:
         f.write(base64.decodestring(s))
-    Image.open(img2).convert("RGB").save(img2bmp)
+    try:
+        Image.open(img1).convert("RGB").save(img1bmp)
+        Image.open(img2).convert("RGB").save(img2bmp)
+    except:
+        import os
+        command ='c:\\python27\\python.exe %s\\img.py '%MEDIA_ROOT
+        os.system(command)
 
     response = HttpResponse(mimetype=u'application/ms-excel')
     excelname = data.get('excelname','')
