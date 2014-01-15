@@ -1,6 +1,7 @@
 #coding=utf-8
 #Date: 11-12-8
 #Time: 下午10:28
+import base64
 import urllib
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, Http404
@@ -10,6 +11,30 @@ from zt import xlwt
 from zt.xlwt import Font, Alignment
 __author__ = u'王健'
 
+
+
+@login_required
+@csrf_exempt
+def uploadImage(request):
+
+    data = request.POST.get('data','')
+    data = json.loads(data)
+
+
+
+
+    try:
+        leniyimg = open('imgout1.png','wb')
+        r=base64.decodestring(str(data.get('img1','')))
+        leniyimg.write(r)
+        leniyimg.close()
+    except Exception,e:
+        pass
+
+
+    # imgData = base64.b64decode(result)
+
+    return HttpResponse("");
 
 @login_required
 @csrf_exempt
