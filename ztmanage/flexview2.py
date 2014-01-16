@@ -5,7 +5,7 @@ import datetime, json
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import render_to_response
-from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo, Code
+from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo, Code, PlanChangeLog
 from zt.ztmanage.tools import getResult, newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById
 from zt.ztmanage.errors import PlanRecordError
 
@@ -314,7 +314,7 @@ def checkPlan(request, obj):
         planno = planno[0]
     else:
         return getResult(False, False, u'主计划不存在')
-    if planno.bianzhi_id != request.user.id:
+    if planno.bianzhi_id == request.user.id:
         return getResult(False, False, u'不能 审核 自己编制的主计划')
     if planno.status == "2":
         return getResult(False, False, u'已经审核过的主计划 不能 再次 审核')
@@ -358,13 +358,21 @@ def uncheckPlan(request, obj):
     else:
         return getResult(False, False, u'主计划不存在')
 
-    if planno.bianzhi_id != request.user.id:
+    if planno.bianzhi_id == request.user.id:
         return getResult(False, False, u'不能 退审 自己编制的主计划')
-    if planno.status != "2":
-        return getResult(False, False, u'未审核过的主计划 不能 退审')
     planno.status = '3'
     planno.shenhe = request.user
     planno.save()
+    pclogb = False
+    for pclog in PlanChangeLog.objects.filter(user=planno.bianzhi,date=datetime.datetime.now()):
+        pclog.count+=1
+        pclog.save()
+        pclogb = True
+    if not pclogb:
+        pclog=PlanChangeLog()
+        pclog.user=planno.bianzhi
+        pclog.count=1
+        pclog.save()
     PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno)).filter(isdel=True).delete()
     PlanRecord.objects.filter(planno=planno).filter(isdel=True).delete()
     for planrecord in PlanRecord.objects.filter(planno=planno):
@@ -397,6 +405,12 @@ def getAllPlanNo(request):
         l.append({'id': plan.pk, 'lsh': plan.lsh})
     return getResult(l)
 
+@permission_required('ztmanage.plan_detail_close')
+def closePlanDetail(request,idarr):
+
+    num = PlanDetail.objects.filter(pk__in=idarr).update(isclose=True)
+
+    return getResult(num,True,u'强制关闭了%s条计划，请重新查询，获取最新数据'%num)
 
 @permission_required('ztmanage.plan_query')
 def queryPlanDetail(request, obj):
@@ -428,7 +442,7 @@ def queryPlanDetail(request, obj):
              'code': pd.planrecord.orderlist.code_id, 'codestr': pd.planrecord.orderlist.code.code,
              'codename': pd.planrecord.orderlist.code.name, 'codegg': pd.planrecord.orderlist.code.gg,
              'scx': pd.planrecord.orderlist.code.scx_id, 'scxstr': pd.planrecord.orderlist.code.scx.name,
-             'ddbh': pd.planrecord.orderlist.ddbh.ddbh, 'ddbh_id': pd.planrecord.orderlist.ddbh_id,
+             'ddbh': pd.planrecord.orderlist.ddbh.ddbh, 'ddbh_id': pd.planrecord.orderlist.ddbh_id, 'isclose':pd.isclose,
              'finishstartdate': '', 'finishstartnum': 0, 'finishenddate': '', 'finishendnum': 0, 'bfnum': 0, 'ysnum': 0}
         r['startsite'] = pd.startsite.name
         r['startsite_id'] = pd.startsite_id
@@ -519,6 +533,9 @@ def queryPlanDetail(request, obj):
         else:
             r['planfinish'] = u'异常'
             r['planfinish_i'] = 4
+        if r['isclose']==True:
+            r['planfinish'] = u'强制关闭'
+            r['planfinish_i'] = 5
     return getResult(l)
 
 
@@ -559,67 +576,75 @@ def queryPlanDetailItem(request, id, zydh, orderlist, startsite, endsite=None):
 
 @login_required
 @permission_required('ztmanage.plan_daily')
-def queryPlanDaily(request, startdate, enddate,scxid,siteid):
+def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
     '''
     日计划完成情况
     1.根据日期，查找计划
     2.根据日期，查找日报表
     3.根据日报表，逆推计划
     '''
-    if startdate>enddate:
-        return getResult(None,False,u'开始日期必须小于结束日期')
+    if startdate > enddate:
+        return getResult(None, False, u'开始日期必须小于结束日期')
     datelist = []
     datamap = {}
 
-    startdatetime=str2date2(startdate)
+    startdatetime = str2date2(startdate)
     enddatetime = str2date2(enddate)
-    running=True
+    running = True
     while running:
         if startdatetime.strftime('%Y%m%d') not in datelist:
             datelist.append(startdatetime.strftime('%Y%m%d'))
-            datamap[startdatetime.strftime('%Y%m%d')]={'date': startdatetime.strftime('%Y%m%d'), 'bzxiangjh': 0, 'bzxiangsj': 0, 'bzjianjh': 0, 'bzjiansj': 0, 'qqxiangsj': 0,'qqjiansj': 0, 'tqxiangsj': 0, 'tqjiansj': 0, 'jianri': 0, 'xiangri': 0}
-        startdatetime+=datetime.timedelta(hours=24)
-        if startdatetime.strftime('%Y%m%d')>enddate:
+            datamap[startdatetime.strftime('%Y%m%d')] = {'date': startdatetime.strftime('%Y%m%d'), 'bzxiangjh': 0,
+                                                         'bzxiangsj': 0, 'bzjianjh': 0, 'bzjiansj': 0, 'qqxiangsj': 0,
+                                                         'qqjiansj': 0, 'tqxiangsj': 0, 'tqjiansj': 0, 'jianri': 0,
+                                                         'xiangri': 0}
+        startdatetime += datetime.timedelta(hours=24)
+        if startdatetime.strftime('%Y%m%d') > enddate:
             break
     projectdict = {}
     projectdicttq = {}
     projectdictqq = {}
     # projectkey = '%s_%s_%s_%s'
 
-    precordquery=PlanRecord.objects.filter(planno__in=PlanNo.objects.filter(status='2'))
+    precordquery = PlanRecord.objects.filter(planno__in=PlanNo.objects.filter(status='2'))
     if scxid:
-        precordquery=precordquery.filter(orderlist__in=OrderList.objects.filter(code__in=Code.objects.filter(scx=scxid)))
-    pqurey=PlanDetail.objects.filter(
-            planrecord__in=precordquery,
-            enddate__gte=str2date2(startdate), enddate__lte=str2date2(enddate))
+        if ismain == 1 or ismain == '1':
+            cq = Code.objects.filter(scx=scxid).exclude(ismain=False)
+        elif ismain == 2 or ismain == '2':
+            cq = Code.objects.filter(scx=scxid, ismain=False)
+        else:
+            cq = Code.objects.filter(scx=scxid)
+        precordquery = precordquery.filter(orderlist__in=OrderList.objects.filter(code__in=cq))
+    else:
+        cq = None
+        if ismain == 1 or ismain == '1':
+            cq = Code.objects.exclude(ismain=False)
+        elif ismain == 2 or ismain == '2':
+            cq = Code.objects.filter(ismain=False)
+        if cq != None:
+            precordquery = precordquery.filter(orderlist__in=OrderList.objects.filter(code__in=cq))
+    pqurey = PlanDetail.objects.filter(
+        planrecord__in=precordquery,
+        enddate__gte=str2date2(startdate), enddate__lte=str2date2(enddate))
     if siteid:
-        pqurey=pqurey.filter(startsite=siteid)
+        pqurey = pqurey.filter(startsite=siteid)
 
     for plan in pqurey:
         d = str(plan.enddate.strftime('%Y%m%d'))
-        if d not in datelist:
-            datelist.append(d)
-            datamap[d] = {'date': d, 'bzxiangjh': 0, 'bzxiangsj': 0, 'bzjianjh': 0, 'bzjiansj': 0, 'qqxiangsj': 0,
-                          'qqjiansj': 0, 'tqxiangsj': 0, 'tqjiansj': 0, 'jianri': 0, 'xiangri': 0}
-
         projectdict[(plan.planrecord.orderlist_id, plan.planrecord.zydh, plan.startsite_id, plan.endsite_id)] = {
-            'date': d,'finishdate':'', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
+            'date': d, 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
         datamap[d]['bzxiangjh'] += 1
         datamap[d]['bzjianjh'] += plan.planrecord.plannum
 
-    orderbbquery=OrderBB.objects.filter(lsh__in=OrderBBNo.objects.filter(lsh__gte=startdate, lsh__lte=enddate))
+    orderbbquery = OrderBB.objects.filter(lsh__in=OrderBBNo.objects.filter(lsh__gte=startdate, lsh__lte=enddate))
     if scxid:
-        orderbbquery=orderbbquery.filter(yorder__in=OrderList.objects.filter(code__in=Code.objects.filter(scx=scxid)))
+        orderbbquery = orderbbquery.filter(yorder__in=OrderList.objects.filter(code__in=Code.objects.filter(scx=scxid)))
     if siteid:
-        orderbbquery=orderbbquery.filter(ywz=siteid)
+        orderbbquery = orderbbquery.filter(ywz=siteid)
 
     for bb in orderbbquery:
         d = str(bb.lsh.lsh.split('-')[0])
-        dictkey=(bb.yorder_id, bb.yzydh, bb.ywz_id, bb.zrwz_id)
-        if d not in datelist:
-            datelist.append(d)
-            datamap[d] = {'date': d, 'bzxiangjh': 0, 'bzxiangsj': 0, 'bzjianjh': 0, 'bzjiansj': 0, 'qqxiangsj': 0,
-                          'qqjiansj': 0, 'tqxiangsj': 0, 'tqjiansj': 0, 'jianri': 0, 'xiangri': 0}
+        dictkey = (bb.yorder_id, bb.yzydh, bb.ywz_id, bb.zrwz_id)
         if projectdict.has_key(dictkey):
             datamap[d]['bzjiansj'] += bb.ywznum
             projectdict[dictkey]['zcnum'] += bb.ywznum
@@ -630,16 +655,16 @@ def queryPlanDaily(request, startdate, enddate,scxid,siteid):
             continue
         else:
             if not (projectdicttq.has_key(dictkey) or projectdictqq.has_key(
-                        dictkey)):
+                    dictkey)):
                 for p in PlanDetail.objects.filter(startsite=bb.ywz_id, endsite=bb.zrwz_id).filter(
                         planrecord__in=PlanRecord.objects.filter(orderlist=bb.yorder_id, zydh=bb.yzydh).filter(
                                 planno__in=PlanNo.objects.filter(status='2'))):
                     if p.enddate.strftime('%Y%m%d') > enddate:
                         projectdicttq[dictkey] = {
-                            'date': p.enddate,'finishdate':'', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
+                            'date': p.enddate, 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
                     elif p.enddate.strftime('%Y%m%d') < startdate:
                         projectdictqq[dictkey] = {
-                            'date': p.enddate,'finishdate':'', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
+                            'date': p.enddate, 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
 
             if projectdicttq.has_key(dictkey):
                 datamap[d]['tqjiansj'] += bb.ywznum
@@ -654,44 +679,46 @@ def queryPlanDaily(request, startdate, enddate,scxid,siteid):
                 projectdictqq[dictkey]['bfnum'] += bb.bfnum
                 projectdictqq[dictkey]['finishdate'] = d
 
-    for orderlistid,zydh,startsiteid,endsiteid in projectdict.keys():
-        okey=(orderlistid,zydh,startsiteid,endsiteid)
-        for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
-            projectdict[okey]['zrnum']+=obb.zrwznum
-        if 0!=projectdict[okey]['zrnum'] == projectdict[okey]['zcnum']+projectdict[okey]['ysnum']+projectdict[okey]['bfnum']:
-            datamap[projectdict[okey]['finishdate']]['bzxiangsj']+=1
+    for orderlistid, zydh, startsiteid, endsiteid in projectdict.keys():
+        okey = (orderlistid, zydh, startsiteid, endsiteid)
+        for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
+                lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
+            projectdict[okey]['zrnum'] += obb.zrwznum
+        if 0 != projectdict[okey]['zrnum'] == projectdict[okey]['zcnum'] + projectdict[okey]['ysnum'] + \
+                projectdict[okey]['bfnum']:
+            datamap[projectdict[okey]['finishdate']]['bzxiangsj'] += 1
 
-    for orderlistid,zydh,startsiteid,endsiteid in projectdicttq.keys():
-        okey=(orderlistid,zydh,startsiteid,endsiteid)
-        for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
-            projectdicttq[okey]['zrnum']+=obb.zrwznum
-        if 0!= projectdicttq[okey]['zrnum'] == projectdicttq[okey]['zcnum']+projectdicttq[okey]['ysnum']+projectdicttq[okey]['bfnum']:
-            datamap[projectdicttq[okey]['finishdate']]['tqxiangsj']+=1
+    for orderlistid, zydh, startsiteid, endsiteid in projectdicttq.keys():
+        okey = (orderlistid, zydh, startsiteid, endsiteid)
+        for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
+                lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
+            projectdicttq[okey]['zrnum'] += obb.zrwznum
+        if 0 != projectdicttq[okey]['zrnum'] == projectdicttq[okey]['zcnum'] + projectdicttq[okey]['ysnum'] + \
+                projectdicttq[okey]['bfnum']:
+            datamap[projectdicttq[okey]['finishdate']]['tqxiangsj'] += 1
 
-    for orderlistid,zydh,startsiteid,endsiteid in projectdictqq.keys():
-        okey=(orderlistid,zydh,startsiteid,endsiteid)
-        for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
-            projectdictqq[okey]['zrnum']+=obb.zrwznum
-        if 0!= projectdictqq[okey]['zrnum'] == projectdictqq[okey]['zcnum']+projectdictqq[okey]['ysnum']+projectdictqq[okey]['bfnum']:
-            datamap[projectdictqq[okey]['finishdate']]['qqxiangsj']+=1
+    for orderlistid, zydh, startsiteid, endsiteid in projectdictqq.keys():
+        okey = (orderlistid, zydh, startsiteid, endsiteid)
+        for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
+                lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
+            projectdictqq[okey]['zrnum'] += obb.zrwznum
+        if 0 != projectdictqq[okey]['zrnum'] == projectdictqq[okey]['zcnum'] + projectdictqq[okey]['ysnum'] + \
+                projectdictqq[okey]['bfnum']:
+            datamap[projectdictqq[okey]['finishdate']]['qqxiangsj'] += 1
 
     for v in datamap.values():
-        if v['bzjianjh']>0:
-            v['jianri']=v['bzjiansj']/v['bzjianjh']*100
-        if v['bzxiangjh']>0:
-            v['xiangri']=v['bzxiangsj']/v['bzxiangjh']*100
+        if v['bzjianjh'] > 0:
+            v['jianri'] = '%.2f' % (float(v['bzjiansj']) / v['bzjianjh'] * 100,)
+        if v['bzxiangjh'] > 0:
+            v['xiangri'] = '%.2f' % (float(v['bzxiangsj'] )/ v['bzxiangjh'] * 100,)
 
-    rl=[]
+    rl = []
     kl = list(datamap.keys())
     kl.sort()
     for k in kl:
         rl.append(datamap[k])
 
     return getResult(rl)
-
-
-
-
 
 
 def queryPlanBy(request, planuser, checkuser, startdate, enddate, checkstartdate, checkenddate, status=None):
@@ -745,16 +772,19 @@ def queryPlan(request, planuser, checkuser, startdate, enddate, checkstartdate, 
 
 @login_required
 @permission_required('ztmanage.plan_changerecord')
-@transaction.commit_on_success
-def changerecordPlan(request, obj):
-    pass
+def changerecordPlan(request):
+    l=[]
+    for p in PlanChangeLog.objects.all().order_by('-date'):
+        l.append({'id':p.pk,'date':p.date.strftime('%Y/%m/%d'),'count':p.count,'user':p.user.last_name})
+    return getResult(l)
 
 
 @login_required
 @permission_required('ztmanage.plan_changerecord')
 @transaction.commit_on_success
-def changerecordPlanDelete(request, obj):
-    pass
+def changerecordPlanDelete(request):
+    PlanChangeLog.objects.all().delete()
+    return getResult(True,True,u'已删除所有主计划退审记录')
 
 
 @login_required
@@ -796,7 +826,7 @@ def getOrderRuningList(request, start, end, ddbh=None):
             orderdict[str(ol.ddbh_id)]['openorderlistnum'] += 1
         else:
             orderdict[str(ol.ddbh_id)]['closeorderlistnum'] += 1
-        #delkeys =[]
+            #delkeys =[]
     for v in orderdict.values():
         #if isclose == 'open':
         #    if v['openorderlistnum'] ==0:
@@ -806,8 +836,8 @@ def getOrderRuningList(request, start, end, ddbh=None):
         #        delkeys.append(str(v['id']))
         if v['openorderlistnum'] == 0:
             v['closeflag'] = 1
-        #for k in delkeys:
-    #    del orderdict[k]
+            #for k in delkeys:
+        #    del orderdict[k]
     l = list(orderbhids)
     l.sort()
     resultlist = []

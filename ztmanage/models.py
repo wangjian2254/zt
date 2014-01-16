@@ -26,6 +26,7 @@ class Ztperm(models.Model):
             ('plan_uncheck',u'主计划退审'),
             ('plan_all',u'主计划汇总'),
             ('plan_query',u'主计划查询'),
+            ('plan_detail_close',u'主计划强制关闭'),
             ('plan_changerecord',u'主计划修改记录'),
             ('plan_daily',u'生产情况日报表'),
 
@@ -57,6 +58,7 @@ class Code(models.Model):
     name=models.CharField(max_length=40,verbose_name='名称',help_text='产品名称')
     gg=models.CharField(max_length=100,verbose_name='规格',help_text='产品规格')
     dj=models.DecimalField(max_digits=10,decimal_places=2,verbose_name='单价',help_text='单价')
+    ismain=models.NullBooleanField(default=True,verbose_name='主配件',null=True,blank=True)
 
     class Admin():
         pass
@@ -256,13 +258,14 @@ class PlanDetail(models.Model):
     endsite = models.ForeignKey(ProductSite,db_index=True,blank=True,null=True,related_name='endsite',verbose_name=u'去向作业区',help_text=u'去向位置')
     isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
     oldData = models.TextField(blank=True,null=True,verbose_name=u'退审时修改前的数据',help_text=u'用来在审核时，和修改的数据做比较，将其他数据用json方式保存')
+    isclose=models.NullBooleanField(default=False,verbose_name=u'强制关闭',null=True,blank=True)
 
 
 
 class PlanChangeLog(models.Model):
-    user = models.ForeignKey(User,verbose_name=u'操作人')
+    user = models.ForeignKey(User,verbose_name=u'操作人',unique_for_date='date')
     date = models.DateField(auto_now=True,verbose_name=u'发生日期')
-    count = models.IntegerField(default=0,verbose_name=u'修改条数',help_text=u'每一条planrecord算一条，一日内多次修改算一天的。')
+    count = models.IntegerField(default=0,verbose_name=u'退审次数',help_text=u'每一条planrecord算一条，一日内多次修改算一天的。')
 
 class Zydh(models.Model):
     orderlist=models.ForeignKey(OrderList,db_index=True,verbose_name=u'订单项')

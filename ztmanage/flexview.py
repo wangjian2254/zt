@@ -192,7 +192,10 @@ def getAllCode(request):
         return getResult(result)
     codelist=[]
     for code in Code.objects.all():
-        codelist.append({'id':code.pk,'code':code.code,'name':code.name,'scx':code.scx_id,'gg':code.gg,'dj':code.dj})
+        if code.ismain==None or code.ismain:
+            codelist.append({'id':code.pk,'code':code.code,'name':code.name,'scx':code.scx_id,'gg':code.gg,'dj':code.dj,'ismain':True})
+        else:
+            codelist.append({'id':code.pk,'code':code.code,'name':code.name,'scx':code.scx_id,'gg':code.gg,'dj':code.dj,'ismain':False})
 #        codelist.append(code)
     result=codelist
     cache.set('allcode',result,3600*24*10)
@@ -221,6 +224,10 @@ def saveCode(request,obj):
     code.code=obj['code'].upper()
     code.name=obj['name']
     code.gg=obj['gg']
+    if obj['ismain']==False:
+        code.ismain=False
+    else:
+        code.ismain=True
     code.dj=float(obj['dj'])
     code.scx=Scx.objects.get(pk=obj['scx'])
     try:

@@ -47,7 +47,7 @@ def uploadImage(request):
         Image.open(img2).convert("RGB").save(img2bmp)
     except:
         import os
-        command ='c:\\python27\\python.exe %s\\img.py '%MEDIA_ROOT
+        command ='c:/python27/python.exe %s/img.py '%MEDIA_ROOT
         os.system(command)
 
     response = HttpResponse(mimetype=u'application/ms-excel')
@@ -55,6 +55,7 @@ def uploadImage(request):
     sheetname = data.get('sheetname','')
     scx = data.get('scx','')
     site = data.get('site','')
+    code = data.get('ismain','')
 
     filename = u'%s.xls'%urllib.quote(excelname.encode('utf-8'))
     if hasattr(request,'META') and request.META.has_key('HTTP_USER_AGENT'):
@@ -130,11 +131,11 @@ def uploadImage(request):
         ws.col(rownum+row*2).width = 256 * 12
         ws.col(rownum+row*2+1).width = 256 * 12
     if datadict['bzxiangjh']>0:
-        datadict['xiangdc']='%s%%'%((datadict['bzxiangsj']/datadict['bzxiangjh'])*100,)
+        datadict['xiangdc']='%.2f%%'%((float(datadict['bzxiangsj'])/datadict['bzxiangjh'])*100,)
     if datadict['bzjianjh']>0:
-        datadict['jiandc']='%s%%'%((datadict['bzjiansj']/datadict['bzjianjh'])*100,)
+        datadict['jiandc']='%.2f%%'%((float(datadict['bzjiansj'])/datadict['bzjianjh'])*100,)
     length=len(arrdata)*2
-    ws.write_merge(0,1,3,rownum+length,u'生产线:%s   作业区:%s  %s'%(scx,site,excelname),style0)
+    ws.write_merge(0,1,3,rownum+length,u'生产线:%s   作业区:%s  主配件:%s    %s'%(scx,site,code,excelname),style0)
     ws.write_merge(0,1,rownum+length+1,rownum+length+3,u'考核期：%s——%s'%(gsdate(excelname.split('-')[1]),gsdate(excelname.split('-')[2])),style0)
     ws.write_merge(2, 3, rownum+length, rownum+length+1, u'合计', style1)
     ws.write_merge(2, 5, rownum+length+2, rownum+length+3, u'累计达成率', style1)
@@ -207,7 +208,7 @@ def getExcelByData(request):
     for row,d in enumerate(data.get('data',[])):
         for i,index in enumerate(data.get('index',[])):
             ws.write_merge(rownum+row, rownum+row, i, i, d.get(index,""), style1)
-        rownum+=1
+    rownum+=1
     wb.save(response)
     return response
 

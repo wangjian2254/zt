@@ -77,6 +77,10 @@ def getCodeByList(l):
     codemap={}
     for code in Code.objects.filter(pk__in=l):
         codevalue={'id':code.pk,'code':code.code,'name':code.name,'gg':code.gg,'dj':code.dj,'scx':scxmap['scx'+str(code.scx_id)]['name']}
+        if code.ismain==False:
+            codevalue['ismain']=False
+        else:
+            codevalue['ismain']=True
         codemap['code'+str(code.pk)]=codevalue
     return codemap
 
@@ -92,9 +96,13 @@ def getCodeNameById(codeid):
     if code:
         return code
     code=Code.objects.get(pk=codeid)
-    code={'id':code.pk,'code':code.code,'name':code.name,'gg':code.gg,'dj':code.dj,'scx':getScxById(code.scx_id)['name']}
-    cache.set('code'+str(codeid),code,3600*24*20)
-    return code
+    codevalue={'id':code.pk,'code':code.code,'name':code.name,'gg':code.gg,'dj':code.dj,'scx':getScxById(code.scx_id)['name']}
+    if code.ismain==False:
+        codevalue['ismain']=False
+    else:
+        codevalue['ismain']=True
+    cache.set('code'+str(codeid),codevalue,3600*24*20)
+    return codevalue
 
 def getOrderByOrderlistid(orderid):
     # orderlist=cache.get('orderlist'+str(orderid))

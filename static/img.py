@@ -2,7 +2,7 @@
 from PIL import Image
 import time,datetime
 import os
-p="d:\\ztweb\\zt\\static\\excel"
+p=os.path.join(os.path.dirname(__file__), 'excel').replace('\\','/')
 l=[]
 
 for n in os.listdir(p):
