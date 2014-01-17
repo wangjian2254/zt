@@ -45,3 +45,7 @@ s|Form s|FormItem s|TextArea{
 s|Form s|FormItem mx|DateField{
 	textAlign:left;
 }
+
+s|Button{
+	chrome-color:#faf0cc;
+}

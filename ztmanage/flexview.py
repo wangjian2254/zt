@@ -78,7 +78,7 @@ def getAllUser(request):
     pass
 @login_required
 def userhaschange(request):
-    if not request.user.is_superuser and request.user.has_perm('ztmanage.order_zhuizong'):
+    if  not request.user.is_superuser and request.user.has_perm('ztmanage.order_zhuizong'):
         return getResult(True)
     else:
         return getResult(False)
@@ -427,15 +427,17 @@ def setOrderListClose(request,orderlistid):
 @permission_required('ztmanage.order_manager')
 @transaction.commit_on_success
 def delOrder(request,idlist):
-    l=[]
-    for obj in idlist:
-        l.append(obj['id'])
-    OrderList.objects.filter(pk__in=l).delete()
-    for i in l:
-        cache.delete('orderlist'+str(i))
-    cache.delete('getOrderIsOpen')
-    return getResult(True)
-    pass
+    try:
+        l=[]
+        for obj in idlist:
+            l.append(obj['id'])
+        OrderList.objects.filter(pk__in=l).delete()
+        for i in l:
+            cache.delete('orderlist'+str(i))
+        cache.delete('getOrderIsOpen')
+        return getResult(True)
+    except:
+        return getResult(False,False,u'数据已经被使用了，无法删除。')
 @login_required
 @permission_required('ztmanage.order_manager')
 @transaction.commit_on_success
