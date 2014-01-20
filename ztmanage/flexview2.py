@@ -506,11 +506,11 @@ def queryPlanDetail(request, obj):
     for obb in OrderBB.objects.filter(yorder__in=noendzrorderlist, yzydh__in=noendzydhlist, ywz__in=noendstartsitelist,
                                       zrwz=None):
         if lm.has_key('z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)):
-            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.zrwz_id)]['finishendnum'] += obb.ywznum
-            if not lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.zrwz_id)]['finishenddate'] or \
-                            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.zrwz_id)]['finishenddate'] < \
+            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishendnum'] += obb.ywznum
+            if not lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishenddate'] or \
+                            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishenddate'] < \
                             obb.lsh.lsh.split('-')[0]:
-                lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.zrwz_id)]['finishenddate'] = obb.lsh.lsh.split('-')[0]
+                lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishenddate'] = obb.lsh.lsh.split('-')[0]
     for obb in OrderBB.objects.filter(yorder__in=hasendzrorderlist, yzydh__in=hasendzydhlist,
                                       ywz__in=hasendstartsitelist, zrwz__in=hasendendsitelist):
         if lm.has_key('z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)):
