@@ -5,7 +5,7 @@ import base64
 import urllib
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, Http404
-import json
+import json, datetime
 from django.views.decorators.csrf import  csrf_exempt
 from zt.settings import MEDIA_ROOT
 from zt import xlwt
@@ -24,7 +24,13 @@ def uploadImage(request):
 
     data = request.read()
     if data:
-        data = json.loads(data)
+        try:
+            data = json.loads(data)
+        except :
+            s = open('d:/ztweb/zt/static/logging/%s_%s.txt'%(datetime.datetime.now().strftime('%Y%m%d'),str(uuid.uuid4())),'w')
+            s.write(data)
+            s.close()
+            return HttpResponse(u'没有数据')
     else:
         raise Http404()
     img1name=MEDIA_ROOT+'/excel/'+str(uuid.uuid4())
@@ -169,7 +175,13 @@ def uploadImage(request):
 def getExcelByData(request):
     data = request.read()
     if data:
-        data = json.loads(data)
+        try:
+            data = json.loads(data)
+        except :
+            s = open('d:/ztweb/zt/static/logging/%s_%s.txt'%(datetime.datetime.now().strftime('%Y%m%d'),str(uuid.uuid4())),'w')
+            s.write(data)
+            s.close()
+            return HttpResponse(u'没有数据')
     else:
         raise Http404()
 
@@ -220,7 +232,13 @@ def getExcelByData(request):
 def getExcelByGroupData(request):
     data = request.read()
     if data:
-        data = json.loads(data)
+        try:
+            data = json.loads(data)
+        except :
+            s = open('d:/ztweb/zt/static/logging/%s_%s.txt'%(datetime.datetime.now().strftime('%Y%m%d'),str(uuid.uuid4())),'w')
+            s.write(data)
+            s.close()
+            return HttpResponse(u'没有数据')
     else:
         raise Http404()
 

@@ -601,9 +601,9 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
         startdatetime += datetime.timedelta(hours=24)
         if startdatetime.strftime('%Y%m%d') > enddate:
             break
-    projectdict = {}
-    projectdicttq = {}
-    projectdictqq = {}
+    projectdict = {}#本期完成
+    projectdicttq = {}#提前期完成
+    projectdictqq = {}#追前期完成
     # projectkey = '%s_%s_%s_%s'
 
     precordquery = PlanRecord.objects.filter(planno__in=PlanNo.objects.filter(status='2'))
@@ -638,7 +638,20 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
 
     orderbbquery = OrderBB.objects.filter(lsh__in=OrderBBNo.objects.filter(lsh__gte=startdate, lsh__lte=enddate))
     if scxid:
-        orderbbquery = orderbbquery.filter(yorder__in=OrderList.objects.filter(code__in=Code.objects.filter(scx=scxid)))
+        cq = Code.objects.filter(scx=scxid)
+        if ismain == 1 or ismain == '1':
+            cq = cq.exclude(ismain=False)
+        elif ismain == 2 or ismain == '2':
+            cq = cq.filter(ismain=False)
+        orderbbquery = orderbbquery.filter(yorder__in=OrderList.objects.filter(code__in=cq))
+    else:
+        cq = None
+        if ismain == 1 or ismain == '1':
+            cq = Code.objects.exclude(ismain=False)
+        elif ismain == 2 or ismain == '2':
+            cq = Code.objects.filter(ismain=False)
+        if cq != None:
+            orderbbquery = orderbbquery.filter(yorder__in=OrderList.objects.filter(code__in=cq))
     if siteid:
         orderbbquery = orderbbquery.filter(ywz=siteid)
 
@@ -647,11 +660,8 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
         dictkey = (bb.yorder_id, bb.yzydh, bb.ywz_id, bb.zrwz_id)
         if projectdict.has_key(dictkey):
             datamap[d]['bzjiansj'] += bb.ywznum
-            projectdict[dictkey]['zcnum'] += bb.ywznum
-            projectdict[dictkey]['ysnum'] += bb.ysnum
-            projectdict[dictkey]['bfnum'] += bb.bfnum
             projectdict[dictkey]['finishdate'] = d
-        elif bb.ywz_id == None:
+        elif bb.zrwz_id == None or bb.ywz_id ==None:
             continue
         else:
             if not (projectdicttq.has_key(dictkey) or projectdictqq.has_key(
@@ -661,22 +671,16 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
                                 planno__in=PlanNo.objects.filter(status='2'))):
                     if p.enddate.strftime('%Y%m%d') > enddate:
                         projectdicttq[dictkey] = {
-                            'date': p.enddate, 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
+                            'date': p.enddate.strftime('%Y%m%d'), 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
                     elif p.enddate.strftime('%Y%m%d') < startdate:
                         projectdictqq[dictkey] = {
-                            'date': p.enddate, 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
+                            'date': p.enddate.strftime('%Y%m%d'), 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
 
             if projectdicttq.has_key(dictkey):
                 datamap[d]['tqjiansj'] += bb.ywznum
-                projectdicttq[dictkey]['zcnum'] += bb.ywznum
-                projectdicttq[dictkey]['ysnum'] += bb.ysnum
-                projectdicttq[dictkey]['bfnum'] += bb.bfnum
                 projectdicttq[dictkey]['finishdate'] = d
             elif projectdictqq.has_key(dictkey):
                 datamap[d]['qqjiansj'] += bb.ywznum
-                projectdictqq[dictkey]['zcnum'] += bb.ywznum
-                projectdictqq[dictkey]['ysnum'] += bb.ysnum
-                projectdictqq[dictkey]['bfnum'] += bb.bfnum
                 projectdictqq[dictkey]['finishdate'] = d
 
     for orderlistid, zydh, startsiteid, endsiteid in projectdict.keys():
@@ -684,6 +688,10 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
                 lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
             projectdict[okey]['zrnum'] += obb.zrwznum
+        for obb in OrderBB.objects.filter(yorder=orderlistid,yzydh=zydh,ywz=startsiteid,zrwz=endsiteid).filter(lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
+            projectdict[okey]['zcnum'] += obb.zrwznum
+            projectdict[okey]['ysnum'] += obb.ysnum
+            projectdict[okey]['bfnum'] += obb.bfnum
         if 0 != projectdict[okey]['zrnum'] == projectdict[okey]['zcnum'] + projectdict[okey]['ysnum'] + \
                 projectdict[okey]['bfnum']:
             datamap[projectdict[okey]['finishdate']]['bzxiangsj'] += 1
@@ -693,6 +701,10 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
                 lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
             projectdicttq[okey]['zrnum'] += obb.zrwznum
+        for obb in OrderBB.objects.filter(yorder=orderlistid,yzydh=zydh,ywz=startsiteid,zrwz=endsiteid).filter(lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
+            projectdicttq[okey]['zcnum'] += obb.zrwznum
+            projectdicttq[okey]['ysnum'] += obb.ysnum
+            projectdicttq[okey]['bfnum'] += obb.bfnum
         if 0 != projectdicttq[okey]['zrnum'] == projectdicttq[okey]['zcnum'] + projectdicttq[okey]['ysnum'] + \
                 projectdicttq[okey]['bfnum']:
             datamap[projectdicttq[okey]['finishdate']]['tqxiangsj'] += 1
@@ -702,6 +714,10 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
                 lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
             projectdictqq[okey]['zrnum'] += obb.zrwznum
+        for obb in OrderBB.objects.filter(yorder=orderlistid,yzydh=zydh,ywz=startsiteid,zrwz=endsiteid).filter(lsh__in=OrderBBNo.objects.filter(lsh__lte=enddate)):
+            projectdictqq[okey]['zcnum'] += obb.zrwznum
+            projectdictqq[okey]['ysnum'] += obb.ysnum
+            projectdictqq[okey]['bfnum'] += obb.bfnum
         if 0 != projectdictqq[okey]['zrnum'] == projectdictqq[okey]['zcnum'] + projectdictqq[okey]['ysnum'] + \
                 projectdictqq[okey]['bfnum']:
             datamap[projectdictqq[okey]['finishdate']]['qqxiangsj'] += 1
