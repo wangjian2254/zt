@@ -27,6 +27,7 @@ class Ztperm(models.Model):
             ('plan_all',u'主计划汇总'),
             ('plan_query',u'主计划查询'),
             ('plan_detail_close',u'主计划强制关闭'),
+            ('plan_detail_online',u'主计划重置在线'),
             ('plan_changerecord',u'主计划修改记录'),
             ('plan_daily',u'生产情况日报表'),
 
@@ -259,6 +260,7 @@ class PlanDetail(models.Model):
     isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
     oldData = models.TextField(blank=True,null=True,verbose_name=u'退审时修改前的数据',help_text=u'用来在审核时，和修改的数据做比较，将其他数据用json方式保存')
     isclose=models.NullBooleanField(default=False,verbose_name=u'强制关闭',null=True,blank=True)
+    isonline=models.NullBooleanField(default=False,verbose_name=u'重置在线',null=True,blank=True)
 
 
 
