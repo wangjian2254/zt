@@ -74,7 +74,7 @@ orderGateway = DjangoGateway({
     'service.updatePlanDelete': updatePlanDelete,
     'service.updatePlanUNDelete': updatePlanUNDelete,
     'service.updatePlanZYDH': updatePlanZYDH,
-    'service.checkPlanDetail': checkPlanDetail,
+    'service.checkOrderbbPlanDetail': checkPlanDetail,
     'service.checkPlan': checkPlan,
     'service.uncheckPlan': uncheckPlan,
     'service.getAllPlanNo': getAllPlanNo,

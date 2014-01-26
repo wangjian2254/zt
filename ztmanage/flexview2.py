@@ -158,7 +158,7 @@ def updatePlan(request, sitelist, unsitelist, planrecordlist, lsh=None):
                         planrecord__in=PlanRecord.objects.filter(orderlist=planrecord.orderlist,
                                                                  zydh=planrecord.zydh)).filter(
                         startsite=plandetail.startsite)
-                    if not plandetail.pk and 0 < errorquery.count():
+                    if plandetail.planrecord.zydh and not plandetail.pk and 0 < errorquery.count():
                         error = errorquery[0]
                         raise PlanRecordError(error.planrecord.planno_id, error.planrecord.orderlist_id,
                                               error.planrecord.zydh, error.startsite_id, error.endsite_id)
@@ -302,7 +302,32 @@ def checkPlanDetail(request,orderbblist,lsh=None):
     1. 区分是保存 还是 修改。修改则排除这一条，计算是否超出计划数量
 
     '''
-    pass
+    messagelist=[]
+    for i,obj in enumerate(orderbblist) :
+        zrwz = obj.get('zrwz',None)
+        if not zrwz:
+            continue
+        orderlistid = obj.get('zrorder',None)
+        orderbbid = obj.get('id',None)
+        zydh = obj.get('yzydh','').strip()
+        num = obj.get('zrwznum',0)
+        totalnum = 0
+        for orderbb in OrderBB.objects.filter(zrorder=orderlistid,yzydh=zydh,zrwz=zrwz):
+            if orderbb.pk != orderbbid:
+                totalnum+=orderbb.zrwznum
+        plandetailquery = PlanDetail.objects.filter(startsite=zrwz,planrecord__in=PlanRecord.objects.filter(orderlist=orderlistid,zydh=zydh).filter(planno__in=PlanNo.objects.filter(status='2')))
+        for detail in plandetailquery:
+            if detail.planrecord.plannum < totalnum:
+                messagelist.append(u'第 %s 条数据，订单号：%s ,物料号：%s ,作业单号：%s ,超过了主计划流水号 %s 的计划数\n\t'%(i+1,detail.planrecord.orderlist.ddbh.ddbh,detail.planrecord.orderlist.code.name,detail.planrecord.zydh,detail.planrecord.planno.lsh))
+    if messagelist:
+        return getResult(False,False,''.join(messagelist))
+    else:
+        messagelist.append(u'sdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\t')
+        messagelist.append(u'sdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\t')
+        return getResult(False,False,''.join(messagelist))
+        # return getResult(True,)
+
+
     #orderBBList=[]
     #for obj in orderbblist:
     #    o=OrderBB()
@@ -545,7 +570,9 @@ def queryPlanDetail(request, obj):
     for obb in OrderBB.objects.filter(yorder__in=noendzrorderlist, yzydh__in=noendzydhlist, ywz__in=noendstartsitelist,
                                       zrwz=None):
         if lm.has_key('z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)):
-            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishendnum'] += obb.ywznum
+            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishendnum'] += obb.zrwznum
+            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['bfnum'] += obb.bfnum
+            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['ysnum'] += obb.ysnum
             if not lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishenddate'] or \
                             lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishenddate'] < \
                             obb.lsh.lsh.split('-')[0]:
@@ -553,7 +580,9 @@ def queryPlanDetail(request, obj):
     for obb in OrderBB.objects.filter(yorder__in=hasendzrorderlist, yzydh__in=hasendzydhlist,
                                       ywz__in=hasendstartsitelist, zrwz__in=hasendendsitelist):
         if lm.has_key('z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)):
-            lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['finishendnum'] += obb.ywznum
+            lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['finishendnum'] += obb.zrwznum
+            lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['bfnum'] += obb.bfnum
+            lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['ysnum'] += obb.ysnum
             if not lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['finishenddate'] or \
                             lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['finishenddate'] < \
                             obb.lsh.lsh.split('-')[0]:
