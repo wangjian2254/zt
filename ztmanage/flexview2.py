@@ -311,7 +311,7 @@ def checkPlanDetail(request,orderbblist,lsh=None):
         orderbbid = obj.get('id',None)
         zydh = obj.get('yzydh','').strip()
         num = obj.get('zrwznum',0)
-        totalnum = 0
+        totalnum = num
         for orderbb in OrderBB.objects.filter(zrorder=orderlistid,yzydh=zydh,zrwz=zrwz):
             if orderbb.pk != orderbbid:
                 totalnum+=orderbb.zrwznum
@@ -742,6 +742,8 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
                 for p in PlanDetail.objects.filter(startsite=bb.ywz_id, endsite=bb.zrwz_id).filter(
                         planrecord__in=PlanRecord.objects.filter(orderlist=bb.yorder_id, zydh=bb.yzydh).filter(
                                 planno__in=PlanNo.objects.filter(status='2'))):
+                    if not p.enddate:
+                        continue
                     if p.enddate.strftime('%Y%m%d') > enddate:
                         projectdicttq[dictkey] = {
                             'date': p.enddate.strftime('%Y%m%d'), 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
@@ -758,6 +760,8 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
 
     for orderlistid, zydh, startsiteid, endsiteid in projectdict.keys():
         okey = (orderlistid, zydh, startsiteid, endsiteid)
+        if not projectdict[okey]['finishdate']:
+            continue
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
                 lsh__in=OrderBBNo.objects.filter(lsh__lte=enddatetimestr)):
             projectdict[okey]['zrnum'] += obb.zrwznum
@@ -771,6 +775,8 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
 
     for orderlistid, zydh, startsiteid, endsiteid in projectdicttq.keys():
         okey = (orderlistid, zydh, startsiteid, endsiteid)
+        if not projectdicttq[okey]['finishdate']:
+            continue
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
                 lsh__in=OrderBBNo.objects.filter(lsh__lte=enddatetimestr)):
             projectdicttq[okey]['zrnum'] += obb.zrwznum
@@ -784,6 +790,8 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
 
     for orderlistid, zydh, startsiteid, endsiteid in projectdictqq.keys():
         okey = (orderlistid, zydh, startsiteid, endsiteid)
+        if not projectdictqq[okey]['finishdate']:
+            continue
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
                 lsh__in=OrderBBNo.objects.filter(lsh__lte=enddatetimestr)):
             projectdictqq[okey]['zrnum'] += obb.zrwznum
