@@ -320,12 +320,9 @@ def checkPlanDetail(request,orderbblist,lsh=None):
             if detail.planrecord.plannum < totalnum:
                 messagelist.append(u'第 %s 条数据，订单号：%s ,物料号：%s ,作业单号：%s ,超过了主计划流水号 %s 的计划数\n\t'%(i+1,detail.planrecord.orderlist.ddbh.ddbh,detail.planrecord.orderlist.code.name,detail.planrecord.zydh,detail.planrecord.planno.lsh))
     if messagelist:
-        return getResult(False,False,''.join(messagelist))
+        return getResult(False,True,''.join(messagelist))
     else:
-        messagelist.append(u'sdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\t')
-        messagelist.append(u'sdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\tsdfsdfsdf\n\tsdfsdfsdfsdf\n\t')
-        return getResult(False,False,''.join(messagelist))
-        # return getResult(True,)
+        return getResult(True)
 
 
     #orderBBList=[]
