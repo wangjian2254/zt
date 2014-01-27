@@ -8,14 +8,14 @@ from django.contrib.auth.models import User, Permission
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from zt.settings import MEDIA_ROOT
-from zt.ztmanage.models import OrderBBNo, Scx, Code, ProductSite, OrderNo, OrderList, OrderBBLock, OrderBB, OrderGenZong, Zydh
-from zt.ztmanage.errors import  CompluteNumError
+from models import OrderBBNo, Scx, Code, ProductSite, OrderNo, OrderList, OrderBBLock, OrderBB, OrderGenZong, Zydh
+from errors import  CompluteNumError
 from django.db import transaction
-from zt.ztmanage.models import Ztperm
+from models import Ztperm
 from django.core.cache import cache
 from zt import xlwt
 from zt.xlwt.Formatting import Font, Alignment
-from zt.ztmanage.tools import getResult, newLSHNoByUser, delFile, getPickleObj, savePickle,  getCodeByList, getOrderNoByList,getOrderByOrderlistid,getCodeNameById, permission_required, orderbbdel_required, orderbbchange_required
+from tools import getResult, newLSHNoByUser, delFile, getPickleObj, savePickle,  getCodeByList, getOrderNoByList,getOrderByOrderlistid,getCodeNameById, permission_required, orderbbdel_required, orderbbchange_required
 
 __author__ = u'王健'
 

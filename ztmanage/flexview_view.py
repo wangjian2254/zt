@@ -4,7 +4,7 @@
 
 from tools import PLANSTATUS, permission_required, str2date2, date2str, getResult
 from view_models import PlanDetailView
-from ztmanage.models import OrderBB
+from models import OrderBB
 
 __author__ = u'王健'
 

@@ -5,9 +5,9 @@ import datetime, json
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import render_to_response
-from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo, Code, PlanChangeLog
-from zt.ztmanage.tools import planchange_required, permission_required, getResult, newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById, str2date, str2date2, PLANSTATUS, date2str
-from zt.ztmanage.errors import PlanRecordError
+from models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo, Code, PlanChangeLog
+from tools import planchange_required, permission_required, getResult, newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById, str2date, str2date2, PLANSTATUS, date2str
+from errors import PlanRecordError
 
 __author__ = u'王健'
 '''
