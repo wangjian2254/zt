@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import render_to_response
 from zt.ztmanage.models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo, Code, PlanChangeLog
-from zt.ztmanage.tools import getResult, newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById
+from zt.ztmanage.tools import planchange_required, permission_required, getResult, newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById, str2date, str2date2, PLANSTATUS, date2str
 from zt.ztmanage.errors import PlanRecordError
 
 __author__ = u'王健'
@@ -19,70 +19,6 @@ __author__ = u'王健'
 ('plan_changerecord',u'主计划修改记录'),
 ('plan_daily',u'生产情况日报表'),
 '''
-
-PLANSTATUS = (u'非常紧急', u'一般紧急', u'标准生产', u'库备')
-
-
-def str2date(strdate):
-    return datetime.datetime.strptime(strdate, '%Y/%m/%d')
-
-
-def str2date2(strdate):
-    return datetime.datetime.strptime(strdate, '%Y%m%d')
-
-
-def date2str(date):
-    if date:
-        return date.strftime('%Y/%m/%d')
-    return u'永久'
-
-
-def permission_required(code):
-    def permission(func):
-        def test(request, *args, **kwargs):
-            if request.user.has_perm(code):
-                return func(request, *args, **kwargs)
-            else:
-                return getResult(False, False, u'权限不够,需要具有：%s 权限' % Ztperm.perm[code])
-
-        return test
-
-    return permission
-
-
-def plandel_required(code):
-    def permission(func):
-        def test(request, *args, **kwargs):
-            if request.user.has_perm(code):
-                return func(request, *args, **kwargs)
-            else:
-                idlist = args[0]
-                if len(idlist) > 0:
-                    if request.user.pk == OrderBB.objects.get(pk=idlist[0]['id']).lsh.user.pk:
-                        return func(request, *args, **kwargs)
-                return getResult(False, False, u'权限不够,需要具有：%s 权限' % Ztperm.perm[code])
-
-        return test
-
-    return permission
-
-
-def planchange_required(code):
-    def permission(func):
-        def test(request, *args, **kwargs):
-            if request.user.has_perm(code):
-                return func(request, *args, **kwargs)
-            else:
-                lsh = kwargs.get('lsh', '')
-                if not lsh:
-                    return func(request, *args, **kwargs)
-                if lsh and request.user.pk == PlanNo.objects.get(lsh=lsh).bianzhi.pk:
-                    return func(request, *args, **kwargs)
-                return getResult(False, False, u'权限不够,需要具有：%s 权限,并且只能修改自己编织的计划' % Ztperm.perm[code])
-
-        return test
-
-    return permission
 
 
 @login_required

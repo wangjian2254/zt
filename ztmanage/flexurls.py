@@ -7,6 +7,7 @@ from zt.ztmanage.flexview import getAllScx, getScxById, saveScx, getAllCode, sav
 from zt.ztmanage.flexview2 import updatePlan, checkPlan, uncheckPlan,  queryPlan, changerecordPlan, queryPlanByUser, getPlanDetailByIdOrLsh, updatePlanUNDelete, updatePlanZYDH, getZYDHByOrderList, getZYDHByCode, queryPlanDetail, getAllPlanNo, queryPlanDaily, closePlanDetail, onlinePlanDetail, checkPlanDetail
 from zt.ztmanage.flexview2 import changerecordPlanDelete, updatePlanDelete, getOrderRuningList, getOrderEndDate
 from zt.ztmanage.models import OrderBBNo
+from zt.ztmanage.flexview_view import queryPlanDetail2
 
 __author__ = u'王健'
 from pyamf.remoting.gateway.django import DjangoGateway
@@ -78,7 +79,7 @@ orderGateway = DjangoGateway({
     'service.checkPlan': checkPlan,
     'service.uncheckPlan': uncheckPlan,
     'service.getAllPlanNo': getAllPlanNo,
-    'service.queryPlanDetail': queryPlanDetail,
+    'service.queryPlanDetail': queryPlanDetail2,
     'service.closePlanDetail': closePlanDetail,
     'service.onlinePlanDetail': onlinePlanDetail,
     'service.queryPlanDaily': queryPlanDaily,

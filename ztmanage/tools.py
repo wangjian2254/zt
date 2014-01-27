@@ -3,9 +3,87 @@
 #Time: 下午10:28
 import datetime
 from django.core.cache import cache
-from zt.ztmanage.models import OrderBBNo, PlanNo, Scx, Code, OrderNo, OrderList
+from zt.ztmanage.models import OrderBBNo, PlanNo, Scx, Code, OrderNo, OrderList, Ztperm, OrderBB
 
 __author__ = u'王健'
+
+
+PLANSTATUS = (u'非常紧急', u'一般紧急', u'标准生产', u'库备')
+
+
+def str2date(strdate):
+    return datetime.datetime.strptime(strdate, '%Y/%m/%d')
+
+
+def str2date2(strdate):
+    return datetime.datetime.strptime(strdate, '%Y%m%d')
+
+
+def date2str(date):
+    if date:
+        return date.strftime('%Y/%m/%d')
+    return u'永久'
+
+
+def permission_required(code):
+    def permission(func):
+        def test(request, *args, **kwargs):
+            if request.user.has_perm(code):
+                return func(request, *args, **kwargs)
+            else:
+                return getResult(False, False, u'权限不够,需要具有：%s 权限' % Ztperm.perm[code])
+
+        return test
+
+    return permission
+
+def planchange_required(code):
+    def permission(func):
+        def test(request, *args, **kwargs):
+            if request.user.has_perm(code):
+                return func(request, *args, **kwargs)
+            else:
+                lsh = kwargs.get('lsh', '')
+                if not lsh:
+                    return func(request, *args, **kwargs)
+                if lsh and request.user.pk == PlanNo.objects.get(lsh=lsh).bianzhi.pk:
+                    return func(request, *args, **kwargs)
+                return getResult(False, False, u'权限不够,需要具有：%s 权限,并且只能修改自己编织的计划' % Ztperm.perm[code])
+
+        return test
+
+    return permission
+
+def orderbbdel_required(code):
+    def permission(func):
+        def test(request, *args, **kwargs):
+            if request.user.has_perm(code):
+                return func(request, *args, **kwargs)
+            else:
+                idlist=args[0]
+                if len(idlist)>0:
+                    if request.user.pk==OrderBB.objects.get(pk=idlist[0]['id']).lsh.user.pk:
+                        return func(request, *args, **kwargs)
+                return getResult(False,False,u'权限不够,需要具有：%s 权限'%Ztperm.perm[code])
+        return test
+    return permission
+def orderbbchange_required(code):
+    def permission(func):
+        def test(request, *args, **kwargs):
+            if len(args)==1 or not args[1]:
+                return func(request, *args, **kwargs)
+            elif request.user.has_perm(code):
+                return func(request, *args, **kwargs)
+            else:
+                lsh=args[1]
+                if request.user.pk==OrderBBNo.objects.get(lsh=lsh).user.pk:
+                    return func(request, *args, **kwargs)
+                return getResult(False,False,u'权限不够,需要具有：%s 权限'%Ztperm.perm[code])
+        return test
+    return permission
+
+
+
 
 def getResult(result,success=True,message=None):
     return {'result':result,'success':success,'message':message}

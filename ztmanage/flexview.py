@@ -15,59 +15,13 @@ from zt.ztmanage.models import Ztperm
 from django.core.cache import cache
 from zt import xlwt
 from zt.xlwt.Formatting import Font, Alignment
-from zt.ztmanage.tools import getResult, newLSHNoByUser, delFile, getPickleObj, savePickle,  getCodeByList, getOrderNoByList,getOrderByOrderlistid,getCodeNameById
+from zt.ztmanage.tools import getResult, newLSHNoByUser, delFile, getPickleObj, savePickle,  getCodeByList, getOrderNoByList,getOrderByOrderlistid,getCodeNameById, permission_required, orderbbdel_required, orderbbchange_required
 
 __author__ = u'王健'
 
 
 
-def login_required1(login=False):
-    def islogin(func):
-        def test(request, *args, **kwargs):
-            if request.user.is_authenticated():
-                return func(request, *args, **kwargs)
-            else:
-                return getResult(False,False,'需要登录后才能操作。')
-            return test
-    return islogin
 
-
-def permission_required(code):
-    def permission(func):
-        def test(request, *args, **kwargs):
-            if request.user.has_perm(code):
-                return func(request, *args, **kwargs)
-            else:
-                return getResult(False,False,u'权限不够,需要具有：%s 权限'%Ztperm.perm[code])
-        return test
-    return permission
-def orderbbdel_required(code):
-    def permission(func):
-        def test(request, *args, **kwargs):
-            if request.user.has_perm(code):
-                return func(request, *args, **kwargs)
-            else:
-                idlist=args[0]
-                if len(idlist)>0:
-                    if request.user.pk==OrderBB.objects.get(pk=idlist[0]['id']).lsh.user.pk:
-                        return func(request, *args, **kwargs)
-                return getResult(False,False,u'权限不够,需要具有：%s 权限'%Ztperm.perm[code])
-        return test
-    return permission
-def orderbbchange_required(code):
-    def permission(func):
-        def test(request, *args, **kwargs):
-            if len(args)==1 or not args[1]:
-                return func(request, *args, **kwargs)
-            elif request.user.has_perm(code):
-                return func(request, *args, **kwargs)
-            else:
-                lsh=args[1]
-                if request.user.pk==OrderBBNo.objects.get(lsh=lsh).user.pk:
-                    return func(request, *args, **kwargs)
-                return getResult(False,False,u'权限不够,需要具有：%s 权限'%Ztperm.perm[code])
-        return test
-    return permission
 
 @login_required
 def getUser(request):
