@@ -5,6 +5,70 @@ from models import *
 __author__ = u'王健'
 
 class PlanDetailView(models.Model):
+    '''
+    sql:
+
+    CREATE
+        /*[ALGORITHM = {UNDEFINED | MERGE | TEMPTABLE}]
+        [DEFINER = { user | CURRENT_USER }]
+        [SQL SECURITY { DEFINER | INVOKER }]*/
+        VIEW `zt2`.`ztmanage_view_plandetail`
+        AS
+        (SELECT
+        ztmanage_plandetail.id
+        , ztmanage_plandetail.planrecord_id
+        , ztmanage_plandetail.startdate
+        , ztmanage_plandetail.enddate
+        , ztmanage_plandetail.startsite_id
+        , ztmanage_plandetail.endsite_id
+        , ztmanage_plandetail.isdel
+        , ztmanage_plandetail.isclose
+        , ztmanage_plandetail.isonline
+        , ztmanage_planrecord.planno_id
+        , ztmanage_planrecord.orderlist_id
+        , ztmanage_planrecord.zydh
+        , ztmanage_planrecord.plannum
+        , ztmanage_planrecord.planbz
+        , ztmanage_planrecord.ordergongyi
+        , ztmanage_planrecord.level
+        , ztmanage_planno.lsh
+        , ztmanage_planno.updateTime
+        , ztmanage_planno.firstcheckTime
+        , ztmanage_planno.lastcheckTime
+        , ztmanage_planno.bianzhi_id
+        , ztmanage_planno.shenhe_id
+        , ztmanage_planno.status
+        , ztmanage_orderlist.ddbh_id
+        , ztmanage_orderlist.code_id
+        , ztmanage_orderlist.num
+        , ztmanage_orderlist.cz
+        , ztmanage_orderlist.createDate
+        , ztmanage_orderlist.closeDate
+        , ztmanage_orderlist.is_open
+        , ztmanage_code.scx_id
+        , ztmanage_code.code
+        , ztmanage_code.name as codename
+        , ztmanage_code.gg
+        , ztmanage_code.ismain
+        , ztmanage_scx.name as scxname
+        , ztmanage_orderno.ddbh
+
+    FROM
+        zt2.ztmanage_plandetail
+        INNER JOIN zt2.ztmanage_planrecord
+            ON (ztmanage_plandetail.planrecord_id = ztmanage_planrecord.id)
+
+        INNER JOIN zt2.ztmanage_planno
+            ON (ztmanage_planrecord.planno_id = ztmanage_planno.id)
+        INNER JOIN zt2.ztmanage_orderlist
+            ON (ztmanage_planrecord.orderlist_id = ztmanage_orderlist.id)
+        INNER JOIN zt2.ztmanage_code
+            ON (ztmanage_orderlist.code_id = ztmanage_code.id)
+        INNER JOIN zt2.ztmanage_orderno
+            ON (ztmanage_orderlist.ddbh_id = ztmanage_orderno.id)
+        INNER JOIN zt2.ztmanage_scx
+            ON (ztmanage_code.scx_id = ztmanage_scx.id));
+    '''
 
     planno_id=models.IntegerField(verbose_name='主计划id')
     lsh = models.CharField(max_length=20,unique=True,verbose_name=u'主计划流水号',help_text=u'主计划流水号')
