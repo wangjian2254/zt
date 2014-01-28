@@ -264,7 +264,7 @@ class PlanDetail(models.Model):
 
     qxorderlist=models.ForeignKey(OrderList,related_name='qx_orderlist', blank=True,null=True, verbose_name=u'订单项',help_text=u'订单中的一个物料')
     finishdate=models.DateField(db_index=True,blank=True,null=True,verbose_name=u'实际完成日期',help_text=u'通过计划查询中的结果，来写入这个数据')
-    # finishData = models.TextField(blank=True,null=True,verbose_name=u'缓存数据',help_text=u'计划查询时，缓存数据，将其他数据用json方式保存')
+    finishData = models.TextField(blank=True,null=True,verbose_name=u'缓存数据',help_text=u'计划查询时，缓存数据，将其他数据用json方式保存')
 
 
 

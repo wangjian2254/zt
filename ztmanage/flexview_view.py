@@ -1,10 +1,12 @@
 #coding=utf-8
 #Date: 11-12-8
 #Time: 下午10:28
+import json
 
 from tools import PLANSTATUS, permission_required, str2date2, date2str, getResult
 from view_models import PlanDetailView
-from models import OrderBB
+from models import OrderBB, PlanDetail
+from django.core.cache import cache
 
 __author__ = u'王健'
 
@@ -34,9 +36,13 @@ def queryPlanDetail2(request, obj):
         query = query.filter(code_id=getattr(obj, 'codeid'))
             # planrecord__in=PlanRecord.objects.filter(
             # orderlist__in=OrderList.objects.filter(code=getattr(obj, 'codeid'))))
-
+    foreverl = []
     l = []
+    cachel = []
     for pd in query:
+        if pd.finishData :
+            cachel.append(json.loads(pd.finishData))
+            continue
         r = {'id': pd.pk, 'planfinish': u'未投', 'planfinish_i': 0, 'orderlistid': pd.orderlist_id, 'code': pd.code_id,
              'codestr': pd.code, 'codename': pd.codename, 'codegg': pd.gg, 'scx': pd.scx_id, 'scxstr': pd.scxname,
              'qxddbh': pd.qxddbh, 'qxddbh_id': pd.qxddbh_id, 'ddbh': pd.ddbh, 'ddbh_id': pd.ddbh_id,
@@ -49,6 +55,7 @@ def queryPlanDetail2(request, obj):
         else:
             r['endsite'] = ''
             r['endsite_id'] = ''
+            foreverl.append(r)
 
         r['zydh'] = pd.zydh
         r['level'] = PLANSTATUS[pd.level]
@@ -63,6 +70,7 @@ def queryPlanDetail2(request, obj):
         # for r in l:
     #     r.update(queryPlanDetailComputer(r.get('id'),r.get('zydh'),r.get('orderlistid'),r.get('startsite_id'),r.get('endsite_id',None)))
     lm = {}
+    lsm={}
     zrorderlist = []
     zydhlist = []
     startsitelist = []
@@ -70,7 +78,6 @@ def queryPlanDetail2(request, obj):
     hasendzydhlist = []
     hasendstartsitelist = []
     hasendendsitelist = []
-    hasendqxddbhlist = []
 
     noendzrorderlist = []
     noendzydhlist = []
@@ -78,7 +85,9 @@ def queryPlanDetail2(request, obj):
 
     for r in l:
         lm['z%(zydh)so%(orderlistid)ss%(startsite_id)sq%(qxddbh_id)se%(endsite_id)s' % r] = r
-        lm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r] = r
+        if not lsm.has_key('z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r):
+            lsm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r]=set()
+        lsm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r].add(r)
         zrorderlist.append(r['orderlistid'])
         zydhlist.append(r['zydh'])
         startsitelist.append(r['startsite_id'])
@@ -87,48 +96,43 @@ def queryPlanDetail2(request, obj):
             hasendzrorderlist.append(r['orderlistid'])
             hasendzydhlist.append(r['zydh'])
             hasendstartsitelist.append(r['startsite_id'])
-            hasendqxddbhlist.append(r['qxddbh_id'])
         else:
             noendzrorderlist.append(r['orderlistid'])
             noendzydhlist.append(r['zydh'])
             noendstartsitelist.append(r['startsite_id'])
 
     for obb in OrderBB.objects.filter(zrorder__in=zrorderlist, yzydh__in=zydhlist, zrwz__in=startsitelist):
-        k = (obb.yzydh, obb.zrorder_id, obb.zrwz_id, obb.zrorder_id)
-        if lm.has_key('z%so%ss%sq%s' % k):
-            lm['z%so%ss%sq%s' % k]['finishstartnum'] += obb.zrwznum
-            if not lm['z%so%ss%sq%s' % k]['finishstartdate'] or \
-                            lm['z%so%ss%sq%s' % k]['finishstartdate'] < \
-                            obb.lsh.lsh.split('-')[0]:
-                lm['z%so%ss%sq%s' % k]['finishstartdate'] = obb.lsh.lsh.split('-')[
-                    0]
+        k = (obb.yzydh, obb.zrorder_id, obb.zrwz_id)
+        if lsm.has_key('z%so%ss%s' % k):
+            for rdict in lsm['z%so%ss%s' % k]:
+                rdict['finishstartnum']+= obb.zrwznum
+            #lsm['z%so%ss%s' % k]['finishstartnum'] += obb.zrwznum
+            if not rdict['finishstartdate'] or rdict['finishstartdate'] < obb.lsh.lsh.split('-')[0]:
+                rdict['finishstartdate'] = obb.lsh.lsh.split('-')[0]
 
-    for obb in OrderBB.objects.filter(yorder__in=noendzrorderlist, yzydh__in=noendzydhlist, ywz__in=noendstartsitelist,
-                                      zrwz=None):
-        if lm.has_key('z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)):
-            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishendnum'] += obb.zrwznum
-            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['bfnum'] += obb.bfnum
-            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['ysnum'] += obb.ysnum
-            if not lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishenddate'] or \
-                            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishenddate'] < \
-                            obb.lsh.lsh.split('-')[0]:
-                lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishenddate'] = obb.lsh.lsh.split('-')[0]
+
     for obb in OrderBB.objects.filter(yorder__in=hasendzrorderlist, yzydh__in=hasendzydhlist,
                                 ywz__in=hasendstartsitelist, zrwz__in=hasendendsitelist):
-        if lm.has_key('z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)):
-            lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['finishendnum'] += obb.zrwznum
-            lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['bfnum'] += obb.bfnum
-            lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['ysnum'] += obb.ysnum
-            if not lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['finishenddate'] or \
-                            lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['finishenddate'] < \
-                            obb.lsh.lsh.split('-')[0]:
-                lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['finishenddate'] = \
-                    obb.lsh.lsh.split('-')[0]
+        ks = 'z%so%ss%sq%se%s'
+        k = (obb.yzydh, obb.yorder_id, obb.ywz_id, obb.zrorder_id, obb.zrwz_id)
+        if lm.has_key(ks%k):
+            lm[ks%k]['finishendnum'] += obb.zrwznum
+            lm[ks%k]['bfnum'] += obb.bfnum
+            lm[ks%k]['ysnum'] += obb.ysnum
+            if not lm[ks%k]['finishenddate'] or  lm[ks%k]['finishenddate'] <  obb.lsh.lsh.split('-')[0]:
+                lm[ks%k]['finishenddate'] =  obb.lsh.lsh.split('-')[0]
     for r in l:
+        if r in foreverl:
+            for obb in OrderBB.objects.filter(yorder=r.get('orderlistid',0), yzydh=r.get('zydh',''), ywz=r.get('startsite_id',0)):
+                r['finishendnum']+=obb.zrwznum
+                r['bfnum']+=obb.bfnum
+                r['ysnum']+=obb.ysnum
+                if not r['finishenddate'] or  r['finishenddate'] <  obb.lsh.lsh.split('-')[0]:
+                    r['finishenddate'] =  obb.lsh.lsh.split('-')[0]
         if r['finishstartnum'] == 0:
             r['planfinish'] = u'未投'
             r['planfinish_i'] = 1
-        elif r['finishstartnum'] == r['finishendnum'] + r['bfnum'] + r['ysnum']:
+        elif r['finishstartnum'] == r['finishendnum'] + r['bfnum'] + r['ysnum'] or r['plannum'] == r['finishendnum'] + r['bfnum'] + r['ysnum']:
             r['planfinish'] = u'完成'
             r['planfinish_i'] = 2
         elif r['finishstartnum'] > r['finishendnum'] + r['bfnum'] + r['ysnum']:
@@ -141,6 +145,7 @@ def queryPlanDetail2(request, obj):
         if r['isclose']==True:
             r['planfinish'] = u'强制关闭'
             r['planfinish_i'] = 5
+            r['finishenddate'] = str2date2(PlanDetail.objects.get(pk = r['id']))
         if r['isonline']==True:
             if r['plannum'] == r['finishendnum'] :
                 r['planfinish'] = u'完成'
@@ -148,4 +153,9 @@ def queryPlanDetail2(request, obj):
             else:
                 r['planfinish'] = u'在线'
                 r['planfinish_i'] = 3
+        if r['planfinish_i'] == 2 :
+            PlanDetail.objects.filter(pk = r.get('id',0)).filter(finishData=None).update(finishdate=str2date2(r['finishenddate']),finishData=json.dumps(r))
+        else:
+            PlanDetail.objects.filter(pk = r.get('id',0)).filter(finishData=None).update(finishData=json.dumps(r))
+    l.extend(cachel)
     return getResult(l)

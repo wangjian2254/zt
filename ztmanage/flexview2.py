@@ -94,6 +94,8 @@ def updatePlan(request, sitelist, unsitelist, planrecordlist, lsh=None):
                         plandetail.endsite = ProductSite.objects.get(pk=getattr(planrecordobj, 'zrwz%s' % psite.id))
                     else:
                         plandetail.endsite = None
+                    plandetail.finishdate = None
+                    plandetail.finishData = None
 
                     # errorquery = PlanDetail.objects.filter(
                     #     planrecord__in=PlanRecord.objects.filter(orderlist=planrecord.orderlist,
@@ -233,6 +235,7 @@ def updatePlanUNDelete(request, recordids):
     return getResult(recordids, True, u'删除主计划记录成功')
 
 @login_required
+@transaction.commit_on_success
 def checkPlanDetail(request,orderbblist,lsh=None):
     '''
     计算投入数量 是否 超过 计划数量
@@ -241,6 +244,7 @@ def checkPlanDetail(request,orderbblist,lsh=None):
     '''
     messagelist=[]
     for i,obj in enumerate(orderbblist) :
+
         zrwz = obj.get('zrwz',None)
         if not zrwz:
             continue
@@ -249,13 +253,20 @@ def checkPlanDetail(request,orderbblist,lsh=None):
         zydh = obj.get('yzydh','').strip()
         num = obj.get('zrwznum',0)
         totalnum = num
+
+        #清空要录转序票的缓存
+        PlanDetail.objects.filter(qxorderlist=obj.get('zrorder',None),planrecord__in=obj.get('yorder',None),obj.get('yzydh','').strip(),startsite=obj.get('ywz',None),endsite =obj.get('zrwz',None)).update(finishData=None)
+        #判断是否导入超出计划
         for orderbb in OrderBB.objects.filter(zrorder=orderlistid,yzydh=zydh,zrwz=zrwz):
             if orderbb.pk != orderbbid:
                 totalnum+=orderbb.zrwznum
         plandetailquery = PlanDetail.objects.filter(startsite=zrwz,planrecord__in=PlanRecord.objects.filter(orderlist=orderlistid,zydh=zydh).filter(planno__in=PlanNo.objects.filter(status='2')))
+
         for detail in plandetailquery:
             if detail.planrecord.plannum < totalnum:
                 messagelist.append(u'第 %s 条数据，订单号：%s ,物料号：%s ,作业单号：%s ,超过了主计划流水号 %s 的计划数\n\t'%(i+1,detail.planrecord.orderlist.ddbh.ddbh,detail.planrecord.orderlist.code.name,detail.planrecord.zydh,detail.planrecord.planno.lsh))
+        #清空要录转序票的缓存
+        plandetailquery.update(finishData=None)
     if messagelist:
         return getResult(False,True,''.join(messagelist))
     else:
@@ -312,7 +323,7 @@ def checkPlan(request, obj):
     PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno)).filter(isdel=True).delete()
     PlanRecord.objects.filter(planno=planno).filter(isdel=True).delete()
     PlanDetail.objects.filter(planrecord__in=PlanRecord.objects.filter(planno=planno)).filter(isdel=False).update(
-        oldData=None)
+        oldData=None,finishdate=None,finishData=None)
     PlanRecord.objects.filter(planno=planno).filter(isdel=False).update(oldData=None)
     for planrecord in PlanRecord.objects.filter(planno=planno).filter(isdel=False):
         if 0 == Zydh.objects.filter(orderlist=planrecord.orderlist_id, zydh=planrecord.zydh).count():
@@ -396,8 +407,7 @@ def getAllPlanNo(request):
 @transaction.commit_on_success
 def closePlanDetail(request,idarr):
 
-    num = PlanDetail.objects.filter(pk__in=idarr).update(isclose=True)
-    PlanDetail.objects.filter(pk__in=idarr).update(isonline=False)
+    num = PlanDetail.objects.filter(pk__in=idarr).update(isclose=True,isonline=False,finishdate=datetime.datetime.now(),finishData=None)
 
     return getResult(num,True,u'强制关闭了%s条计划，请重新查询，获取最新数据'%num)
 
@@ -405,8 +415,7 @@ def closePlanDetail(request,idarr):
 @transaction.commit_on_success
 def onlinePlanDetail(request,idarr):
 
-    PlanDetail.objects.filter(pk__in=idarr).update(isclose=False)
-    num = PlanDetail.objects.filter(pk__in=idarr).update(isonline=True)
+    num = PlanDetail.objects.filter(pk__in=idarr).update(isclose=False,isonline=True,finishdate=None,finishData=None)
 
     return getResult(num,True,u'重置在线了%s条计划，请重新查询，获取最新数据'%num)
 
@@ -639,10 +648,16 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
     if siteid:
         pqurey = pqurey.filter(startsite=siteid)
 
+    hlpqidset = set()
     for plan in pqurey:
         d = str(plan.enddate.strftime('%Y%m%d'))
-        projectdict[(plan.planrecord.orderlist_id, plan.planrecord.zydh, plan.startsite_id, plan.endsite_id)] = {
-            'date': d, 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
+        projectdict[(plan.planrecord.orderlist_id, plan.planrecord.zydh, plan.startsite_id, plan.endsite_id, plan.qxorderlist_id)] = {
+                'date': d, 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
+        if plan.finishdate and  startdate <= plan.finishdate.strftime('%Y%m%d') <= enddate:
+            datamap[plan.finishdate.strftime('%Y%m%d')]['bzxiangsj']+=1
+            hlpqidset.add((plan.planrecord.orderlist_id, plan.planrecord.zydh, plan.startsite_id, plan.endsite_id, plan.qxorderlist_id))
+
+
         datamap[d]['bzxiangjh'] += 1
         datamap[d]['bzjianjh'] += plan.planrecord.plannum
 
@@ -667,7 +682,7 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
 
     for bb in orderbbquery:
         d = str(bb.lsh.lsh.split('-')[0])
-        dictkey = (bb.yorder_id, bb.yzydh, bb.ywz_id, bb.zrwz_id)
+        dictkey = (bb.yorder_id, bb.yzydh, bb.ywz_id, bb.zrwz_id, bb.zrorder_id)
         if projectdict.has_key(dictkey):
             datamap[d]['bzjiansj'] += bb.ywznum
             projectdict[dictkey]['finishdate'] = d
@@ -679,7 +694,7 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
                 for p in PlanDetail.objects.filter(startsite=bb.ywz_id, endsite=bb.zrwz_id).filter(
                         planrecord__in=PlanRecord.objects.filter(orderlist=bb.yorder_id, zydh=bb.yzydh).filter(
                                 planno__in=PlanNo.objects.filter(status='2'))):
-                    if not p.enddate:
+                    if not p.enddate :
                         continue
                     if p.enddate.strftime('%Y%m%d') > enddate:
                         projectdicttq[dictkey] = {
@@ -695,9 +710,9 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
                 datamap[d]['qqjiansj'] += bb.ywznum
                 projectdictqq[dictkey]['finishdate'] = d
 
-    for orderlistid, zydh, startsiteid, endsiteid in projectdict.keys():
-        okey = (orderlistid, zydh, startsiteid, endsiteid)
-        if not projectdict[okey]['finishdate']:
+    for orderlistid, zydh, startsiteid, endsiteid, qxorderlist_id in projectdict.keys():
+        okey = (orderlistid, zydh, startsiteid, endsiteid, qxorderlist_id)
+        if not projectdict[okey]['finishdate'] or  dictkey in hlpqidset:
             continue
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
                 lsh__in=OrderBBNo.objects.filter(lsh__lte=enddatetimestr)):
@@ -710,8 +725,8 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
                 projectdict[okey]['bfnum']:
             datamap[projectdict[okey]['finishdate']]['bzxiangsj'] += 1
 
-    for orderlistid, zydh, startsiteid, endsiteid in projectdicttq.keys():
-        okey = (orderlistid, zydh, startsiteid, endsiteid)
+    for orderlistid, zydh, startsiteid, endsiteid, qxorderlist_id in projectdicttq.keys():
+        okey = (orderlistid, zydh, startsiteid, endsiteid, qxorderlist_id)
         if not projectdicttq[okey]['finishdate']:
             continue
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
@@ -725,8 +740,8 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
                 projectdicttq[okey]['bfnum']:
             datamap[projectdicttq[okey]['finishdate']]['tqxiangsj'] += 1
 
-    for orderlistid, zydh, startsiteid, endsiteid in projectdictqq.keys():
-        okey = (orderlistid, zydh, startsiteid, endsiteid)
+    for orderlistid, zydh, startsiteid, endsiteid, qxorderlist_id in projectdictqq.keys():
+        okey = (orderlistid, zydh, startsiteid, endsiteid, qxorderlist_id)
         if not projectdictqq[okey]['finishdate']:
             continue
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
