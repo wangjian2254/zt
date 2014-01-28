@@ -20,7 +20,7 @@ def queryPlanDetail2(request, obj):
         query = query.filter(enddate__gte=str2date2(getattr(obj, 'wcstart')),
                              enddate__lte=str2date2(getattr(obj, 'wcend')))
     if getattr(obj, 'site', ''):
-        query = query.filter(startsite=getattr(obj, 'site'))
+        query = query.filter(startsite_id=getattr(obj, 'site'))
     if getattr(obj, 'zydh', ''):
         query = query.filter(zydh=getattr(obj, 'zydh'))
     if getattr(obj, 'planid', ''):
@@ -37,16 +37,14 @@ def queryPlanDetail2(request, obj):
 
     l = []
     for pd in query:
-        r = {'id': pd.pk, 'planfinish': u'未投', 'planfinish_i': 0, 'orderlistid': pd.orderlist_id,
-             'code': pd.code_id, 'codestr': pd.code,
-             'codename': pd.codename, 'codegg': pd.gg,
-             'scx': pd.scx_id, 'scxstr': pd.scxname,
-             'ddbh': pd.ddbh, 'ddbh_id': pd.ddbh_id, 'isclose':pd.isclose, 'isonline':pd.isonline,
-             'finishstartdate': '', 'finishstartnum': 0, 'finishenddate': '', 'finishendnum': 0, 'bfnum': 0, 'ysnum': 0}
-        r['startsite'] = pd.startsite.name
-        r['startsite_id'] = pd.startsite_id
+        r = {'id': pd.pk, 'planfinish': u'未投', 'planfinish_i': 0, 'orderlistid': pd.orderlist_id, 'code': pd.code_id,
+             'codestr': pd.code, 'codename': pd.codename, 'codegg': pd.gg, 'scx': pd.scx_id, 'scxstr': pd.scxname,
+             'qxddbh': pd.qxddbh, 'qxddbh_id': pd.qxddbh_id, 'ddbh': pd.ddbh, 'ddbh_id': pd.ddbh_id,
+             'isclose': pd.isclose, 'isonline': pd.isonline, 'finishstartdate': '', 'finishstartnum': 0,
+             'finishenddate': '', 'finishendnum': 0, 'bfnum': 0, 'ysnum': 0, 'startsite': pd.startname,
+             'startsite_id': pd.startsite_id}
         if pd.endsite_id:
-            r['endsite'] = pd.endsite.name
+            r['endsite'] = pd.endname
             r['endsite_id'] = pd.endsite_id
         else:
             r['endsite'] = ''
@@ -72,13 +70,14 @@ def queryPlanDetail2(request, obj):
     hasendzydhlist = []
     hasendstartsitelist = []
     hasendendsitelist = []
+    hasendqxddbhlist = []
 
     noendzrorderlist = []
     noendzydhlist = []
     noendstartsitelist = []
 
     for r in l:
-        lm['z%(zydh)so%(orderlistid)ss%(startsite_id)se%(endsite_id)s' % r] = r
+        lm['z%(zydh)so%(orderlistid)ss%(startsite_id)sq%(qxddbh_id)se%(endsite_id)s' % r] = r
         lm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r] = r
         zrorderlist.append(r['orderlistid'])
         zydhlist.append(r['zydh'])
@@ -88,18 +87,20 @@ def queryPlanDetail2(request, obj):
             hasendzrorderlist.append(r['orderlistid'])
             hasendzydhlist.append(r['zydh'])
             hasendstartsitelist.append(r['startsite_id'])
+            hasendqxddbhlist.append(r['qxddbh_id'])
         else:
             noendzrorderlist.append(r['orderlistid'])
             noendzydhlist.append(r['zydh'])
             noendstartsitelist.append(r['startsite_id'])
 
     for obb in OrderBB.objects.filter(zrorder__in=zrorderlist, yzydh__in=zydhlist, zrwz__in=startsitelist):
-        if lm.has_key('z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.zrwz_id)):
-            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.zrwz_id)]['finishstartnum'] += obb.zrwznum
-            if not lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.zrwz_id)]['finishstartdate'] or \
-                            lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.zrwz_id)]['finishstartdate'] < \
+        k = (obb.yzydh, obb.zrorder_id, obb.zrwz_id, obb.zrorder_id)
+        if lm.has_key('z%so%ss%sq%s' % k):
+            lm['z%so%ss%sq%s' % k]['finishstartnum'] += obb.zrwznum
+            if not lm['z%so%ss%sq%s' % k]['finishstartdate'] or \
+                            lm['z%so%ss%sq%s' % k]['finishstartdate'] < \
                             obb.lsh.lsh.split('-')[0]:
-                lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.zrwz_id)]['finishstartdate'] = obb.lsh.lsh.split('-')[
+                lm['z%so%ss%sq%s' % k]['finishstartdate'] = obb.lsh.lsh.split('-')[
                     0]
 
     for obb in OrderBB.objects.filter(yorder__in=noendzrorderlist, yzydh__in=noendzydhlist, ywz__in=noendstartsitelist,
@@ -113,7 +114,7 @@ def queryPlanDetail2(request, obj):
                             obb.lsh.lsh.split('-')[0]:
                 lm['z%so%ss%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id)]['finishenddate'] = obb.lsh.lsh.split('-')[0]
     for obb in OrderBB.objects.filter(yorder__in=hasendzrorderlist, yzydh__in=hasendzydhlist,
-                                      ywz__in=hasendstartsitelist, zrwz__in=hasendendsitelist):
+                                ywz__in=hasendstartsitelist, zrwz__in=hasendendsitelist):
         if lm.has_key('z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)):
             lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['finishendnum'] += obb.zrwznum
             lm['z%so%ss%se%s' % (obb.yzydh, obb.zrorder_id, obb.ywz_id, obb.zrwz_id)]['bfnum'] += obb.bfnum

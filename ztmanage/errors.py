@@ -12,9 +12,11 @@ class CompluteNumError(Exception):
         self.wz=wz
 
 class PlanRecordError(Exception):
-    def __init__(self,planno,order,zydh,startsite,endsite=None):
+    def __init__(self,planno,order,code,qxddbh,zydh,startsite,endsite=None):
         self.planno=planno
         self.order=order
+        self.code=code
+        self.qxddbh=qxddbh
         self.zydh=zydh
         self.startsite=startsite
         self.endsite=endsite

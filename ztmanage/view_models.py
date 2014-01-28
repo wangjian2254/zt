@@ -52,6 +52,8 @@ class PlanDetailView(models.Model):
         , ztmanage_code.ismain
         , ztmanage_scx.name as scxname
         , ztmanage_orderno.ddbh
+	    ,startsite.name as startname
+	    ,endsite.name as endname
 
     FROM
         zt2.ztmanage_plandetail
@@ -67,10 +69,14 @@ class PlanDetailView(models.Model):
         INNER JOIN zt2.ztmanage_orderno
             ON (ztmanage_orderlist.ddbh_id = ztmanage_orderno.id)
         INNER JOIN zt2.ztmanage_scx
-            ON (ztmanage_code.scx_id = ztmanage_scx.id));
+            ON (ztmanage_code.scx_id = ztmanage_scx.id)
+	    INNER JOIN zt2.ztmanage_productsite as startsite
+            ON (ztmanage_plandetail.startsite_id = startsite.id)
+	    LEFT JOIN zt2.ztmanage_productsite as endsite
+            ON (ztmanage_plandetail.endsite_id = endsite.id));
     '''
 
-    planno_id=models.IntegerField(verbose_name='主计划id')
+    planno_id=models.IntegerField(verbose_name=u'主计划id')
     lsh = models.CharField(max_length=20,unique=True,verbose_name=u'主计划流水号',help_text=u'主计划流水号')
     updateTime = models.DateField(db_index=True,verbose_name=u'编制日期',help_text=u'每修改一次，改变一次')
     firstcheckTime = models.DateField(auto_now=True,blank=True,null=True,db_index=True,verbose_name=u'第一次审核日期',help_text=u'第一次审核')
@@ -88,28 +94,35 @@ class PlanDetailView(models.Model):
 
     startdate=models.DateField(db_index=True,verbose_name=u'计划投入日期',help_text=u'物料计划投入生产的日期')
     enddate=models.DateField(db_index=True,blank=True,null=True,verbose_name=u'计划完成日期',help_text=u'物料计划完成生产的日期,为空则是永久停留')
-    startsite = models.ForeignKey(ProductSite,db_index=True,related_name='startsite',verbose_name=u'起始作业区',help_text=u'生产的作业区')
-    endsite = models.ForeignKey(ProductSite,db_index=True,blank=True,null=True,related_name='endsite',verbose_name=u'去向作业区',help_text=u'去向位置')
+    # startsite = models.ForeignKey(ProductSite,db_index=True,related_name='startsite',verbose_name=u'起始作业区',help_text=u'生产的作业区')
+    startsite_id=models.IntegerField(verbose_name=u'开始位置id')
+    startname=models.CharField(max_length=20,blank=True,null=True,verbose_name=u'开始位置')
+    #endsite = models.ForeignKey(ProductSite,db_index=True,blank=True,null=True,related_name='endsite',verbose_name=u'去向作业区',help_text=u'去向位置')
+    endsite_id=models.IntegerField(verbose_name=u'结束位置id')
+    endname=models.CharField(max_length=20,blank=True,null=True,verbose_name=u'结束位置')
     isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
     isclose=models.NullBooleanField(default=False,verbose_name=u'强制关闭',null=True,blank=True)
     isonline=models.NullBooleanField(default=False,verbose_name=u'重置在线',null=True,blank=True)
 
-    ddbh_id=models.IntegerField(verbose_name='订单编号id')
-    ddbh=models.CharField(max_length=40,unique=True,verbose_name='订单编号',help_text='源订单编号')
-    # code=models.ForeignKey(Code,verbose_name='产品编号')
-    num=models.IntegerField(verbose_name='数量',help_text='订单数量')
-    cz=models.DecimalField(max_digits=14,decimal_places=2,verbose_name='产值',help_text='产值')
-    createDate=models.DateTimeField(auto_now_add=True)
-    closeDate=models.CharField(max_length=20,blank=True,null=True,verbose_name='订单关闭日期')
-    is_open=models.BooleanField(default=True,db_index=True,verbose_name='订单开关',help_text='订单是否关闭')
+    ddbh_id=models.IntegerField(verbose_name=u'订单编号id')
+    ddbh=models.CharField(max_length=40,unique=True,verbose_name=u'订单编号',help_text=u'源订单编号')
 
-    scx_id=models.IntegerField(verbose_name='生产线id')
-    scxname=models.CharField(max_length=40,verbose_name='名称',unique=True,help_text='生产线名称')
-    code_id=models.IntegerField(verbose_name='代码id')
-    code=models.CharField(max_length=40,verbose_name='代码',unique=True,help_text='产品代码')
-    codename=models.CharField(max_length=40,verbose_name='名称',help_text='产品名称')
-    gg=models.CharField(max_length=100,verbose_name='规格',help_text='产品规格')
-    ismain=models.NullBooleanField(default=True,verbose_name='主配件',null=True,blank=True)
+    qxddbh_id=models.IntegerField(verbose_name=u'订单编号id')
+    qxddbh=models.CharField(max_length=40,unique=True,verbose_name=u'订单编号',help_text=u'源订单编号')
+    # code=models.ForeignKey(Code,verbose_name='产品编号')
+    num=models.IntegerField(verbose_name=u'数量',help_text=u'订单数量')
+    cz=models.DecimalField(max_digits=14,decimal_places=2,verbose_name=u'产值',help_text=u'产值')
+    createDate=models.DateTimeField(auto_now_add=True)
+    closeDate=models.CharField(max_length=20,blank=True,null=True,verbose_name=u'订单关闭日期')
+    is_open=models.BooleanField(default=True,db_index=True,verbose_name=u'订单开关',help_text=u'订单是否关闭')
+
+    scx_id=models.IntegerField(verbose_name=u'生产线id')
+    scxname=models.CharField(max_length=40,verbose_name=u'名称',unique=True,help_text=u'生产线名称')
+    code_id=models.IntegerField(verbose_name=u'代码id')
+    code=models.CharField(max_length=40,verbose_name=u'代码',unique=True,help_text=u'产品代码')
+    codename=models.CharField(max_length=40,verbose_name=u'名称',help_text=u'产品名称')
+    gg=models.CharField(max_length=100,verbose_name=u'规格',help_text=u'产品规格')
+    ismain=models.NullBooleanField(default=True,verbose_name=u'主配件',null=True,blank=True)
 
     class Meta:
         db_table = 'ztmanage_view_plandetail'

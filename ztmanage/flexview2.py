@@ -8,6 +8,7 @@ from django.shortcuts import render_to_response
 from models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo, Code, PlanChangeLog
 from tools import planchange_required, permission_required, getResult, newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById, str2date, str2date2, PLANSTATUS, date2str
 from errors import PlanRecordError
+from ztmanage.view_models import PlanDetailView
 
 __author__ = u'王健'
 '''
@@ -85,32 +86,32 @@ def updatePlan(request, sitelist, unsitelist, planrecordlist, lsh=None):
                     else:
                         plandetail.enddate = str2date(getattr(planrecordobj, 'enddate%s' % psite.id))
                     plandetail.startsite = psite
+                    if getattr(planrecordobj, 'qxddbh%s' % psite.id, None):
+                        plandetail.qxorderlist = OrderList.objects.get(pk=getattr(planrecordobj, 'qxddbh%s' % psite.id, None))
+                    else:
+                        plandetail.qxorderlist = planrecord.orderlist
                     if getattr(planrecordobj, 'zrwz%s' % psite.id, None):
                         plandetail.endsite = ProductSite.objects.get(pk=getattr(planrecordobj, 'zrwz%s' % psite.id))
                     else:
                         plandetail.endsite = None
 
-                    errorquery = PlanDetail.objects.filter(
-                        planrecord__in=PlanRecord.objects.filter(orderlist=planrecord.orderlist,
-                                                                 zydh=planrecord.zydh)).filter(
-                        startsite=plandetail.startsite)
+                    # errorquery = PlanDetail.objects.filter(
+                    #     planrecord__in=PlanRecord.objects.filter(orderlist=planrecord.orderlist,
+                    #                                              zydh=planrecord.zydh)).filter(
+                    #     startsite=plandetail.startsite)
+                    #使用 视图
+                    errorquery = PlanDetailView.objects.filter(orderlist=planrecord.orderlist,zydh=planrecord.zydh,startsite_id=plandetail.startsite_id,qxddbh_id=plandetail.qxorderlist_id)
+
                     if plandetail.planrecord.zydh and not plandetail.pk and 0 < errorquery.count():
                         error = errorquery[0]
-                        raise PlanRecordError(error.planrecord.planno_id, error.planrecord.orderlist_id,
-                                              error.planrecord.zydh, error.startsite_id, error.endsite_id)
+                        raise PlanRecordError(error.lsh, error.ddbh, error.codename, error.qxddbh,
+                                              error.zydh, error.startname, error.endname)
                     plandetail.save()
             return getResult(planno, True, u'计划制定成功,流水号：%s' % planno.lsh)
     except PlanRecordError, e:
-        plan = PlanNo.objects.get(pk=e.planno)
-        orderlist = OrderList.objects.get(pk=e.order)
-        zydh = e.zydh
-        startsite = ProductSite.objects.get(pk=e.startsite)
-        if e.endsite:
-            endsite = ProductSite.objects.get(pk=e.endsite)
-        else:
-            endsite = {}
-        msg = u'订单号为：%s ,物料号为：%s ,作业单号为：%s ,投入位置为：%s ，去向位置为：%s ，这条计划和流水号：%s 主计划中的一条计划重复。' % (
-            orderlist.ddbh.ddbh, orderlist.code.code, zydh, startsite.name, getattr(endsite, 'name', u'无'), plan.lsh)
+
+        msg = u'订单号为：%s ,物料号为：%s ,作业单号为：%s ,投入位置为：%s ，去向订单号为：%s，去向位置为：%s ，这条计划和流水号：%s 主计划中的一条计划重复。' % (
+            e.order, e.code, e.zydh, e.startsite,e.qxddbh, e.endsite, e.planno)
         return getResult(False, False, msg)
 
 
