@@ -4,6 +4,7 @@
 import datetime, json
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo, Code, PlanChangeLog
 from tools import planchange_required, permission_required, getResult, newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById, str2date, str2date2, PLANSTATUS, date2str
@@ -255,7 +256,7 @@ def checkPlanDetail(request,orderbblist,lsh=None):
         totalnum = num
 
         #清空要录转序票的缓存
-        PlanDetail.objects.filter(qxorderlist=obj.get('zrorder',None),planrecord__in=obj.get('yorder',None),obj.get('yzydh','').strip(),startsite=obj.get('ywz',None),endsite =obj.get('zrwz',None)).update(finishData=None)
+        PlanDetail.objects.filter(qxorderlist=obj.get('zrorder',None),planrecord__in=PlanRecord.objects.filter(orderlist =obj.get('yorder',None),zydh=obj.get('yzydh','').strip()),startsite=obj.get('ywz',None),endsite =obj.get('zrwz',None)).update(finishData=None)
         #判断是否导入超出计划
         for orderbb in OrderBB.objects.filter(zrorder=orderlistid,yzydh=zydh,zrwz=zrwz):
             if orderbb.pk != orderbbid:
@@ -954,6 +955,15 @@ def initZYDH(request):
     url = 'http://' + request.META['HTTP_HOST'] + '/static/swf/'
     return render_to_response('zt/index.html', {'url': url, 'p': datetime.datetime.now()})
 
+
+@transaction.commit_on_success
+def initQXDDBH(request):
+    for plandetail in PlanDetail.objects.all():
+        if not plandetail.qxorderlist:
+            plandetail.qxorderlist = plandetail.planrecord.orderlist
+            plandetail.save()
+
+    return HttpResponseRedirect("/")
 
 
 

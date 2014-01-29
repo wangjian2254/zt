@@ -6,15 +6,18 @@ import json
 from tools import PLANSTATUS, permission_required, str2date2, date2str, getResult
 from view_models import PlanDetailView
 from models import OrderBB, PlanDetail
-from django.core.cache import cache
+from django.db import transaction
 
 __author__ = u'王健'
 
 
 @permission_required('ztmanage.plan_query')
+@transaction.commit_on_success
 def queryPlanDetail2(request, obj):
     query = PlanDetailView.objects.filter(status='2')
         # planrecord__in=PlanRecord.objects.filter(planno__in=PlanNo.objects.filter(status='2')))
+    if getattr(obj,'uncache',''):
+        query = query.filter(finishData=None)
     if getattr(obj, 'trstart', '') and getattr(obj, 'trend', ''):
         query = query.filter(startdate__gte=str2date2(getattr(obj, 'trstart')),
                              startdate__lte=str2date2(getattr(obj, 'trend')))
@@ -86,8 +89,8 @@ def queryPlanDetail2(request, obj):
     for r in l:
         lm['z%(zydh)so%(orderlistid)ss%(startsite_id)sq%(qxddbh_id)se%(endsite_id)s' % r] = r
         if not lsm.has_key('z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r):
-            lsm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r]=set()
-        lsm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r].add(r)
+            lsm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r]=[]
+        lsm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r].append(r)
         zrorderlist.append(r['orderlistid'])
         zydhlist.append(r['zydh'])
         startsitelist.append(r['startsite_id'])
@@ -145,7 +148,9 @@ def queryPlanDetail2(request, obj):
         if r['isclose']==True:
             r['planfinish'] = u'强制关闭'
             r['planfinish_i'] = 5
-            r['finishenddate'] = str2date2(PlanDetail.objects.get(pk = r['id']))
+            finishdate = PlanDetail.objects.get(pk = r['id']).finishdate
+            if finishdate:
+                r['finishenddate'] = str2date2(finishdate)
         if r['isonline']==True:
             if r['plannum'] == r['finishendnum'] :
                 r['planfinish'] = u'完成'

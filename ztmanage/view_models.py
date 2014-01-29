@@ -24,6 +24,8 @@ class PlanDetailView(models.Model):
         , ztmanage_plandetail.isdel
         , ztmanage_plandetail.isclose
         , ztmanage_plandetail.isonline
+,ztmanage_plandetail.finishdate
+,ztmanage_plandetail.finishData
         , ztmanage_planrecord.planno_id
         , ztmanage_planrecord.orderlist_id
         , ztmanage_planrecord.zydh
@@ -52,8 +54,10 @@ class PlanDetailView(models.Model):
         , ztmanage_code.ismain
         , ztmanage_scx.name as scxname
         , ztmanage_orderno.ddbh
-	    ,startsite.name as startname
-	    ,endsite.name as endname
+	,startsite.name as startname
+	,endsite.name as endname
+	,qxorderlist.ddbh_id as qxddbh_id
+	,qxorderlistddbh.ddbh as qxddbh
 
     FROM
         zt2.ztmanage_plandetail
@@ -70,10 +74,16 @@ class PlanDetailView(models.Model):
             ON (ztmanage_orderlist.ddbh_id = ztmanage_orderno.id)
         INNER JOIN zt2.ztmanage_scx
             ON (ztmanage_code.scx_id = ztmanage_scx.id)
-	    INNER JOIN zt2.ztmanage_productsite as startsite
+	INNER JOIN zt2.ztmanage_productsite as startsite
             ON (ztmanage_plandetail.startsite_id = startsite.id)
-	    LEFT JOIN zt2.ztmanage_productsite as endsite
-            ON (ztmanage_plandetail.endsite_id = endsite.id));
+	LEFT JOIN zt2.ztmanage_productsite as endsite
+            ON (ztmanage_plandetail.endsite_id = endsite.id)
+	LEFT JOIN zt2.ztmanage_orderlist as qxorderlist
+            ON (ztmanage_plandetail.qxorderlist_id = qxorderlist.id)
+	left JOIN zt2.ztmanage_orderno as qxorderlistddbh
+            ON (qxorderlist.ddbh_id = qxorderlistddbh.id)
+
+);
     '''
 
     planno_id=models.IntegerField(verbose_name=u'主计划id')
@@ -103,6 +113,8 @@ class PlanDetailView(models.Model):
     isdel = models.BooleanField(default=False,db_index=True,verbose_name=u'是否删除',help_text=u'是否废弃')
     isclose=models.NullBooleanField(default=False,verbose_name=u'强制关闭',null=True,blank=True)
     isonline=models.NullBooleanField(default=False,verbose_name=u'重置在线',null=True,blank=True)
+    finishdate=models.DateField(db_index=True,blank=True,null=True,verbose_name=u'实际完成日期',help_text=u'通过计划查询中的结果，来写入这个数据')
+    finishData = models.TextField(blank=True,null=True,verbose_name=u'缓存数据',help_text=u'计划查询时，缓存数据，将其他数据用json方式保存')
 
     ddbh_id=models.IntegerField(verbose_name=u'订单编号id')
     ddbh=models.CharField(max_length=40,unique=True,verbose_name=u'订单编号',help_text=u'源订单编号')
@@ -123,6 +135,8 @@ class PlanDetailView(models.Model):
     codename=models.CharField(max_length=40,verbose_name=u'名称',help_text=u'产品名称')
     gg=models.CharField(max_length=100,verbose_name=u'规格',help_text=u'产品规格')
     ismain=models.NullBooleanField(default=True,verbose_name=u'主配件',null=True,blank=True)
+
+
 
     class Meta:
         db_table = 'ztmanage_view_plandetail'

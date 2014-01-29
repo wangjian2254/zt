@@ -11,7 +11,6 @@ from zt.settings import MEDIA_ROOT
 from models import OrderBBNo, Scx, Code, ProductSite, OrderNo, OrderList, OrderBBLock, OrderBB, OrderGenZong, Zydh
 from errors import  CompluteNumError
 from django.db import transaction
-from models import Ztperm
 from django.core.cache import cache
 from zt import xlwt
 from zt.xlwt.Formatting import Font, Alignment
@@ -685,19 +684,6 @@ def getOrderGenZongByDate(request,datestart,is_open,ddbh=None,code=None,allsite=
     if not ddbh and not code and allsite:
         savePickle(datestart,is_open,result)
     return result
-
-@transaction.commit_on_success
-def autoCompleteGenZong(request):
-    datestr=datetime.datetime.now().strftime("%Y%m%d")
-    #if not hasFile(datestr,True):
-    data=getOrderGenZongRow(request,datestr,'open')
-    savePickle(datestr,True,data)
-    #if not hasFile(datestr,False):
-    data=getOrderGenZongRow(request,datestr,'close')
-    savePickle(datestr,False,data)
-
-    url='http://'+request.META['HTTP_HOST']+'/static/swf/'
-    return render_to_response('zt/index.html',{'url':url,'p':datetime.datetime.now()})
 
 
 @login_required
