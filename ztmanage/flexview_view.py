@@ -18,6 +18,7 @@ def queryPlanDetail2(request, obj):
         # planrecord__in=PlanRecord.objects.filter(planno__in=PlanNo.objects.filter(status='2')))
     if getattr(obj,'uncache',''):
         query = query.filter(finishData=None)
+        pass
     if getattr(obj, 'trstart', '') and getattr(obj, 'trend', ''):
         query = query.filter(startdate__gte=str2date2(getattr(obj, 'trstart')),
                              startdate__lte=str2date2(getattr(obj, 'trend')))
@@ -74,35 +75,35 @@ def queryPlanDetail2(request, obj):
     #     r.update(queryPlanDetailComputer(r.get('id'),r.get('zydh'),r.get('orderlistid'),r.get('startsite_id'),r.get('endsite_id',None)))
     lm = {}
     lsm={}
-    zrorderlist = []
-    zydhlist = []
-    startsitelist = []
-    hasendzrorderlist = []
-    hasendzydhlist = []
-    hasendstartsitelist = []
-    hasendendsitelist = []
+    zrorderlist = set()
+    zydhlist = set()
+    startsitelist = set()
+    hasendzrorderlist = set()
+    hasendzydhlist = set()
+    hasendstartsitelist = set()
+    hasendendsitelist = set()
 
-    noendzrorderlist = []
-    noendzydhlist = []
-    noendstartsitelist = []
+    noendzrorderlist = set()
+    noendzydhlist = set()
+    noendstartsitelist = set()
 
     for r in l:
         lm['z%(zydh)so%(orderlistid)ss%(startsite_id)sq%(qxddbh_id)se%(endsite_id)s' % r] = r
         if not lsm.has_key('z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r):
             lsm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r]=[]
         lsm['z%(zydh)so%(orderlistid)ss%(startsite_id)s' % r].append(r)
-        zrorderlist.append(r['orderlistid'])
-        zydhlist.append(r['zydh'])
-        startsitelist.append(r['startsite_id'])
+        zrorderlist.add(r['orderlistid'])
+        zydhlist.add(r['zydh'])
+        startsitelist.add(r['startsite_id'])
         if r.get('endsite_id', ''):
-            hasendendsitelist.append(r['endsite_id'])
-            hasendzrorderlist.append(r['orderlistid'])
-            hasendzydhlist.append(r['zydh'])
-            hasendstartsitelist.append(r['startsite_id'])
+            hasendendsitelist.add(r['endsite_id'])
+            hasendzrorderlist.add(r['orderlistid'])
+            hasendzydhlist.add(r['zydh'])
+            hasendstartsitelist.add(r['startsite_id'])
         else:
-            noendzrorderlist.append(r['orderlistid'])
-            noendzydhlist.append(r['zydh'])
-            noendstartsitelist.append(r['startsite_id'])
+            noendzrorderlist.add(r['orderlistid'])
+            noendzydhlist.add(r['zydh'])
+            noendstartsitelist.add(r['startsite_id'])
 
     for obb in OrderBB.objects.filter(zrorder__in=zrorderlist, yzydh__in=zydhlist, zrwz__in=startsitelist):
         k = (obb.yzydh, obb.zrorder_id, obb.zrwz_id)

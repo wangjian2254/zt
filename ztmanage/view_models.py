@@ -56,7 +56,7 @@ class PlanDetailView(models.Model):
         , ztmanage_orderno.ddbh
 	,startsite.name as startname
 	,endsite.name as endname
-	,qxorderlist.ddbh_id as qxddbh_id
+	,qxorderlist.id as qxddbh_id
 	,qxorderlistddbh.ddbh as qxddbh
 
     FROM
