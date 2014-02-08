@@ -9,7 +9,7 @@ from django.shortcuts import render_to_response
 from models import OrderList, OrderNo, OrderBB, PlanNo, PlanRecord, PlanDetail, ProductSite, Ztperm, Zydh, OrderBBNo, Code, PlanChangeLog
 from tools import planchange_required, permission_required, getResult, newPlanLSHNoByUser, getOrderByOrderlistid, getCodeNameById, str2date, str2date2, PLANSTATUS, date2str
 from errors import PlanRecordError
-from ztmanage.view_models import PlanDetailView
+from view_models import PlanDetailView
 
 __author__ = u'王健'
 '''
@@ -190,6 +190,7 @@ def getPlanDetailByIdOrLsh(request, obj):
             else:
                 planrecord['enddate%s' % plandetail.startsite_id] = u'永久'
             planrecord['zrwz%s' % plandetail.startsite_id] = plandetail.endsite_id
+            planrecord['qxddbh%s' % plandetail.startsite_id] = plandetail.qxorderlist_id
             if plandetail.oldData:
                 planrecord['oldDataDict'].update(json.loads(plandetail.oldData))
             planrecord['isdel%s' % plandetail.startsite_id] = plandetail.isdel

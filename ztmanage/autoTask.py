@@ -6,7 +6,7 @@ from django.shortcuts import render_to_response
 from flexview import getOrderGenZongRow
 from tools import savePickle
 from django.db import transaction
-from ztmanage.flexview_view import queryPlanDetail2
+from flexview_view import queryPlanDetail2
 
 __author__ = u'王健'
 

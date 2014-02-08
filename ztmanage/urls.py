@@ -5,12 +5,12 @@ Created on 2011-3-19
 @author: 王健
 '''
 from django.conf.urls.defaults import patterns
-from zt.ztmanage.views import  top, menu, welcome
-from zt.ztmanage.views import noperm, dataadd, codeupload, orderbbsave, orderbblist
-from zt.ztmanage.dataPrint import getExcelByData, getExcelByGroupData, uploadImage
-from zt.ztmanage.flexurls import orderGateway
-from zt.ztmanage.flexview2 import initZYDH, initQXDDBH
-from ztmanage.autoTask import autoCompleteGenZong
+from views import  top, menu, welcome
+from views import noperm, dataadd, codeupload, orderbbsave, orderbblist
+from dataPrint import getExcelByData, getExcelByGroupData, uploadImage
+from flexurls import orderGateway
+from flexview2 import initZYDH, initQXDDBH
+from autoTask import autoCompleteGenZong
 
 urlpatterns = patterns(r'^zt/$',
                        (r'^top/$', top),
