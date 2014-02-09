@@ -103,9 +103,9 @@ def updatePlan(request, sitelist, unsitelist, planrecordlist, lsh=None):
                     #                                              zydh=planrecord.zydh)).filter(
                     #     startsite=plandetail.startsite)
                     #使用 视图
-                    errorquery = PlanDetailView.objects.filter(orderlist=planrecord.orderlist,zydh=planrecord.zydh,startsite_id=plandetail.startsite_id,qxddbh_id=plandetail.qxorderlist_id)
+                    errorquery = PlanDetailView.objects.filter(orderlist=planrecord.orderlist,zydh=planrecord.zydh,startsite_id=plandetail.startsite_id,qxddbh_id=plandetail.qxorderlist_id,endsite_id=getattr(planrecordobj, 'zrwz%s' % psite.id, None)).exclude(pk=plandetail.pk)
 
-                    if plandetail.planrecord.zydh and not plandetail.pk and 0 < errorquery.count():
+                    if plandetail.planrecord.zydh  and 0 < errorquery.count():
                         error = errorquery[0]
                         raise PlanRecordError(error.lsh, error.ddbh, error.codename, error.qxddbh,
                                               error.zydh, error.startname, error.endname)
