@@ -889,6 +889,11 @@ def getOrderRuningList(request, start, end, ddbh=None):
             v['closeflag'] = 1
             #for k in delkeys:
         #    del orderdict[k]
+        if start and end:
+            if datetime.datetime.strptime(start, '%Y%m%d')<= datetime.datetime.strptime(v['xddate'], '%Y/%m/%d')<=datetime.datetime.strptime(end, '%Y%m%d'):
+                pass
+            else:
+                orderbhids.remove(v['id'])
     l = list(orderbhids)
     l.sort()
     resultlist = []

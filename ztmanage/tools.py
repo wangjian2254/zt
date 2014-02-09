@@ -24,6 +24,11 @@ def date2str(date):
         return date.strftime('%Y/%m/%d')
     return u'永久'
 
+def date2str2(date):
+    if date:
+        return date.strftime('%Y%m%d')
+    return u'永久'
+
 
 def permission_required(code):
     def permission(func):

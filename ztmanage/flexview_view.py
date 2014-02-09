@@ -3,7 +3,7 @@
 #Time: 下午10:28
 import json
 
-from tools import PLANSTATUS, permission_required, str2date2, date2str, getResult
+from tools import PLANSTATUS, permission_required, str2date2, date2str, getResult, date2str2
 from view_models import PlanDetailView
 from models import OrderBB, PlanDetail
 from django.db import transaction
@@ -151,7 +151,7 @@ def queryPlanDetail2(request, obj):
             r['planfinish_i'] = 5
             finishdate = PlanDetail.objects.get(pk = r['id']).finishdate
             if finishdate:
-                r['finishenddate'] = str2date2(finishdate)
+                r['finishenddate'] = date2str2(finishdate)
         if r['isonline']==True:
             if r['plannum'] == r['finishendnum'] :
                 r['planfinish'] = u'完成'
