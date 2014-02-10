@@ -8,7 +8,7 @@ from django.contrib.auth.models import User, Permission
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from zt.settings import MEDIA_ROOT
-from models import OrderBBNo, Scx, Code, ProductSite, OrderNo, OrderList, OrderBBLock, OrderBB, OrderGenZong, Zydh
+from models import OrderBBNo, Scx, Code, ProductSite, OrderNo, OrderList, OrderBBLock, OrderBB, OrderGenZong, Zydh, PlanDetail, PlanRecord, PlanNo
 from errors import  CompluteNumError
 from django.db import transaction
 from django.core.cache import cache
@@ -563,6 +563,10 @@ def saveOrderBB(request,orderbblist,lsh=None):
                 computeOrderMonitorByLsh(lsh.lsh.split('-')[0],OrderBB.objects.filter(lsh=lsh),'jian')
             orderBBList=[]
             for obj in orderbblist:
+                #清空要录转序票的缓存
+                PlanDetail.objects.filter(qxorderlist=obj.get('zrorder',None),planrecord__in=PlanRecord.objects.filter(orderlist =obj.get('yorder',None),zydh=obj.get('yzydh','').strip()),startsite=obj.get('ywz',None),endsite =obj.get('zrwz',None)).update(finishData=None)
+                PlanDetail.objects.filter(startsite=obj.get('zrwz',None),planrecord__in=PlanRecord.objects.filter(orderlist=obj.get('yorder',None),zydh=obj.get('yzydh','').strip()).filter(planno__in=PlanNo.objects.filter(status='2'))).update(finishData=None)
+
                 o=OrderBB()
                 if obj.has_key('id'):
                     o.pk=obj['id']
