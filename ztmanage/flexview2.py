@@ -237,7 +237,6 @@ def updatePlanUNDelete(request, recordids):
     return getResult(recordids, True, u'删除主计划记录成功')
 
 @login_required
-@transaction.commit_on_success
 def checkPlanDetail(request,orderbblist,lsh=None):
     '''
     计算投入数量 是否 超过 计划数量
@@ -257,7 +256,7 @@ def checkPlanDetail(request,orderbblist,lsh=None):
         totalnum = num
 
         #清空要录转序票的缓存
-        PlanDetail.objects.filter(qxorderlist=obj.get('zrorder',None),planrecord__in=PlanRecord.objects.filter(orderlist =obj.get('yorder',None),zydh=obj.get('yzydh','').strip()),startsite=obj.get('ywz',None),endsite =obj.get('zrwz',None)).update(finishData=None)
+        # PlanDetail.objects.filter(qxorderlist=obj.get('zrorder',None),planrecord__in=PlanRecord.objects.filter(orderlist =obj.get('yorder',None),zydh=obj.get('yzydh','').strip()),startsite=obj.get('ywz',None),endsite =obj.get('zrwz',None)).update(finishData=None)
         #判断是否导入超出计划
         for orderbb in OrderBB.objects.filter(zrorder=orderlistid,yzydh=zydh,zrwz=zrwz):
             if orderbb.pk != orderbbid:
@@ -268,7 +267,7 @@ def checkPlanDetail(request,orderbblist,lsh=None):
             if detail.planrecord.plannum < totalnum:
                 messagelist.append(u'第 %s 条数据，订单号：%s ,物料号：%s ,作业单号：%s ,超过了主计划流水号 %s 的计划数\n\t'%(i+1,detail.planrecord.orderlist.ddbh.ddbh,detail.planrecord.orderlist.code.name,detail.planrecord.zydh,detail.planrecord.planno.lsh))
         #清空要录转序票的缓存
-        plandetailquery.update(finishData=None)
+        # plandetailquery.update(finishData=None)
     if messagelist:
         return getResult(False,True,''.join(messagelist))
     else:
@@ -394,6 +393,7 @@ def uncheckPlan(request, obj):
         else:
             oldData['enddate%s' % plandetail.startsite_id] = u'永久'
         oldData['zrwz%s' % plandetail.startsite_id] = plandetail.endsite_id
+        oldData['qxddbh%s' % plandetail.startsite_id] = plandetail.qxorderlist_id
         PlanDetail.objects.filter(pk=plandetail.pk).update(oldData=json.dumps(oldData))
 
     return getResult(True, True, u'退审 主计划成功，流水号为：%s' % planno.lsh)
