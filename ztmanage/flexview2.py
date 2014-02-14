@@ -714,7 +714,7 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
 
     for orderlistid, zydh, startsiteid, endsiteid, qxorderlist_id in projectdict.keys():
         okey = (orderlistid, zydh, startsiteid, endsiteid, qxorderlist_id)
-        if not projectdict[okey]['finishdate'] or  dictkey in hlpqidset:
+        if not projectdict[okey]['finishdate'] or  okey in hlpqidset:
             continue
         for obb in OrderBB.objects.filter(zrorder=orderlistid, yzydh=zydh, zrwz=startsiteid).filter(
                 lsh__in=OrderBBNo.objects.filter(lsh__lte=enddatetimestr)):
