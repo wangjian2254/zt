@@ -560,6 +560,11 @@ def saveOrderBB(request,orderbblist,lsh=None):
 
                 if lsh.lsh.find(date)!=0:
                     return getResult(False,False,'只能修改当天的报表。')
+                for obj in OrderBB.objects.filter(lsh=lsh):
+                    #清空要录转序票的缓存
+                    PlanDetail.objects.filter(qxorderlist=obj.get('zrorder',None),planrecord__in=PlanRecord.objects.filter(orderlist =obj.get('yorder',None),zydh=obj.get('yzydh','').strip()),startsite=obj.get('ywz',None),endsite =obj.get('zrwz',None)).update(finishData=None)
+                    PlanDetail.objects.filter(startsite=obj.get('zrwz',None),planrecord__in=PlanRecord.objects.filter(orderlist=obj.get('yorder',None),zydh=obj.get('yzydh','').strip()).filter(planno__in=PlanNo.objects.filter(status='2'))).update(finishData=None)
+
                 computeOrderMonitorByLsh(lsh.lsh.split('-')[0],OrderBB.objects.filter(lsh=lsh),'jian')
             orderBBList=[]
             for obj in orderbblist:

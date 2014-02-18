@@ -134,6 +134,7 @@ def updatePlanZYDH(request, zydhlist):
                 return getResult(False, False, u'只有审核过的计划才需要单独使用 作业单号修改，其他情况正常修改即可。')
             planrecord.zydh = getattr(obj, 'zydh', '').strip().upper()
             planrecord.save()
+            PlanDetail.objects.filter(planrecord=planrecord).update(finishData=None)
             if 0 == Zydh.objects.filter(orderlist=planrecord.orderlist_id, zydh=planrecord.zydh).count():
                 try:
                     zydh = Zydh()
@@ -233,7 +234,7 @@ def updatePlanUNDelete(request, recordids):
         if '3' != record.planno.status:
             return getResult(False, False, u'主计划记录恢复失败,流水号：%s，不是退审状态' % record.planno.lsh)
     planrecordquery.update(isdel=False)
-    PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=False)
+    PlanDetail.objects.filter(planrecord__in=planrecordquery).update(isdel=False,finishdate=None,finishData=None)
     return getResult(recordids, True, u'删除主计划记录成功')
 
 @login_required

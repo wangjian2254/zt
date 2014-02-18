@@ -7,6 +7,7 @@ from flexview import getOrderGenZongRow
 from tools import savePickle
 from django.db import transaction
 from flexview_view import queryPlanDetail2
+from models import PlanDetail
 
 __author__ = u'王健'
 
@@ -21,6 +22,15 @@ def autoCompleteGenZong(request):
     savePickle(datestr,False,data)
 
     queryPlanDetail2(request,{'uncache':True})
+
+    url='http://'+request.META['HTTP_HOST']+'/static/swf/'
+    return render_to_response('zt/index.html',{'url':url,'p':datetime.datetime.now()})
+
+
+
+@transaction.commit_on_success
+def initCachePlan(request):
+    PlanDetail.objects.update(finishData=None)
 
     url='http://'+request.META['HTTP_HOST']+'/static/swf/'
     return render_to_response('zt/index.html',{'url':url,'p':datetime.datetime.now()})

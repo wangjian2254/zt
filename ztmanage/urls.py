@@ -10,7 +10,7 @@ from views import noperm, dataadd, codeupload, orderbbsave, orderbblist
 from dataPrint import getExcelByData, getExcelByGroupData, uploadImage
 from flexurls import orderGateway
 from flexview2 import initZYDH, initQXDDBH
-from autoTask import autoCompleteGenZong
+from autoTask import autoCompleteGenZong, initCachePlan
 
 urlpatterns = patterns(r'^zt/$',
                        (r'^top/$', top),
@@ -27,6 +27,7 @@ urlpatterns = patterns(r'^zt/$',
                        (r'^auto', autoCompleteGenZong),
                        (r'^initZYDH', initZYDH),
                        (r'^initQXDDBH', initQXDDBH),
+                       (r'^initCachePlan', initCachePlan),
 #                       (r'^tiaozheng', tiaozhengOrderBB),
                        (r'^geteway/', orderGateway
                            ),
