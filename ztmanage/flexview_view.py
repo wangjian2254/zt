@@ -159,9 +159,10 @@ def queryPlanDetail2(request, obj):
             else:
                 r['planfinish'] = u'在线'
                 r['planfinish_i'] = 3
-        if r['planfinish_i'] == 2 :
-            PlanDetail.objects.filter(pk = r.get('id',0)).filter(finishData=None).update(finishdate=str2date2(r['finishenddate']),finishData=json.dumps(r))
-        else:
-            PlanDetail.objects.filter(pk = r.get('id',0)).filter(finishData=None).update(finishData=json.dumps(r))
+        if getattr(obj,'uncache',''):
+            if r['planfinish_i'] == 2 :
+                PlanDetail.objects.filter(pk = r.get('id',0)).filter(finishData=None).update(finishdate=str2date2(r['finishenddate']),finishData=json.dumps(r))
+            else:
+                PlanDetail.objects.filter(pk = r.get('id',0)).filter(finishData=None).update(finishData=json.dumps(r))
     l.extend(cachel)
     return getResult(l)
