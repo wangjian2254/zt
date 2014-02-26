@@ -687,7 +687,7 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
         d = str(bb.lsh.lsh.split('-')[0])
         dictkey = (bb.yorder_id, bb.yzydh, bb.ywz_id, bb.zrwz_id, bb.zrorder_id)
         if projectdict.has_key(dictkey):
-            datamap[d]['bzjiansj'] += bb.ywznum
+            datamap[d]['bzjiansj'] += bb.zrwznum
             projectdict[dictkey]['finishdate'] = d
         elif bb.zrwz_id == None or bb.ywz_id ==None:
             continue
@@ -707,10 +707,10 @@ def queryPlanDaily(request, startdate, enddate, scxid, siteid, ismain):
                             'date': p.enddate.strftime('%Y%m%d'), 'finishdate': '', 'zrnum': 0, 'zcnum': 0, 'ysnum': 0, 'bfnum': 0}
 
             if projectdicttq.has_key(dictkey):
-                datamap[d]['tqjiansj'] += bb.ywznum
+                datamap[d]['tqjiansj'] += bb.zrwznum
                 projectdicttq[dictkey]['finishdate'] = d
             elif projectdictqq.has_key(dictkey):
-                datamap[d]['qqjiansj'] += bb.ywznum
+                datamap[d]['qqjiansj'] += bb.zrwznum
                 projectdictqq[dictkey]['finishdate'] = d
 
     for orderlistid, zydh, startsiteid, endsiteid, qxorderlist_id in projectdict.keys():
