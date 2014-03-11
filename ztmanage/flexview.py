@@ -309,7 +309,8 @@ def getOrderIsOpen(request):
     for o in OrderList.objects.filter(is_open=True).order_by('-id'):
         oset.add(o.ddbh_id)
 #        orderlist.append(o)
-        orderlist.append({'id':o.pk,'ddbh':o.ddbh_id,'code':o.code_id,'num':o.num,'dj':o.dj,'cz':o.cz,'createDate':o.createDate,'closeDate':o.closeDate,'is_open':o.is_open})
+        orderlist.append({'id':o.pk,'ddbh':o.ddbh_id,'code':o.code_id,'is_open':o.is_open})
+        # orderlist.append({'id':o.pk,'ddbh':o.ddbh_id,'code':o.code_id,'num':o.num,'dj':o.dj,'cz':o.cz,'createDate':o.createDate,'closeDate':o.closeDate,'is_open':o.is_open})
     ordernolist=[]
     for n in OrderNo.objects.filter(pk__in=list(oset)):
 #        ordernolist.append(n)
